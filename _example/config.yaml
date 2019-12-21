@@ -1,0 +1,20 @@
+log:
+  default:
+    console:
+  WS:
+    console:
+    file:
+      location: tmp/log-ws
+  Main:
+    console:
+      level: info
+  Access:
+    console:
+      keys: {message: "M"}
+metric:
+  host: "127.0.0.1:8125"
+  max_packet_size: 10
+  prefix: rockgo
+sentry:
+  dsn: "http://user@127.0.0.1/1"
+  repanic: true
