@@ -5,7 +5,7 @@ RockGo is fast, simple application framework for Go.
 ## Features
 * Application
 	* [80%] Service, ServiceGroup
-	* [x] Config
+	* [40%] Config
 	* [x] Basic middleware
 		* Access log
 		* recover & metric
