@@ -46,6 +46,16 @@ func main() {
 		})
 	handleWorkspaces(app)
 
+	app.NewServiceGroup("g1", "/g").
+		Use(func(ctx iris.Context) {
+			println("g1 only middleware")
+			ctx.Next()
+		}).
+		NewService("a", "/a").
+			Get(func(ctx iris.Context) {
+				ctx.Text("get a")
+			})
+
 	app.NewService("fatal", "/fatal").
 		Get(func(ctx iris.Context) {
 			panic("PanicErrInfo")

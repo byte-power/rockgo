@@ -1,12 +1,6 @@
 package rock
 
 import (
-	"errors"
-	"fmt"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/byte-power/rockgo/util"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/core/host"
@@ -22,84 +16,24 @@ type Application interface {
 
 	// 生成服务对象，用以注册各种请求的handler
 	NewService(name, path string) *Service
+	NewServiceGroup(name, path string) *ServiceGroup
 
 	// 启动服务，host可包含端口号，如省略域名或ip将与0.0.0.0等效
 	Run(host string, conf ...host.Configurator)
 }
 
 func NewApplication() Application {
-	a := &application{
-		iris:          iris.New(),
-		services:      map[string]*Service{},
-		handlerStatus: map[string]bool{},
-	}
-	a.iris.Use(func(ctx iris.Context) {
-		startHandleTime := time.Now()
-		defer func() {
-			recovered := recover()
-			if recovered != nil {
-				var err error
-				switch v := recovered.(type) {
-				case error:
-					err = v
-				case string:
-					err = errors.New(v)
-				default:
-					err = errors.New(util.AnyToString(v))
-				}
-				if fn := panicHandler; fn != nil {
-					fn(ctx, err)
-				} else {
-					ctx.StatusCode(http.StatusInternalServerError)
-					ctx.JSON(util.AnyMap{"error": err.Error()})
-				}
-			}
-			route := ctx.GetCurrentRoute()
-			if route != nil {
-				name := route.MainHandlerName()
-				appPrefix := ""
-				code := ctx.GetStatusCode()
-				var codeExpl string
-				if code > 100 && code < 400 {
-					codeExpl = ".ok"
-				} else if code >= 400 && code < 500 {
-					codeExpl = ".4xx"
-				} else if code >= 500 {
-					codeExpl = ".5xx"
-				}
-				// record: [{appName}.api.{path}.{method} | {appName}.api.{path}.all | {appName}.api.all] * [status 100~399 | 4xx | 5xx]
-				statsPrefix := appPrefix + ".api."
-				MetricIncrease(statsPrefix + name + "." + strings.ToLower(ctx.Method()))
-				MetricIncrease(statsPrefix + name + ".all")
-				MetricIncrease(statsPrefix + "all")
-				if codeExpl != "" {
-					MetricIncrease(statsPrefix + name + "." + strings.ToLower(ctx.Method()) + codeExpl)
-					MetricIncrease(statsPrefix + name + ".all" + codeExpl)
-					MetricIncrease(statsPrefix + "all" + codeExpl)
-				}
-				// record: time cost - [{appName}.api.all | {appName}.api.{path}.all] * [status 100~399 | all]
-				// 以便后期统计 min, mean, max, all, 90%
-				dur := startHandleTime.Sub(time.Now())
-				MetricTiming(statsPrefix+"all", dur)
-				MetricTiming(statsPrefix+name+".all", dur)
-				if codeExpl != "" {
-					MetricTiming(statsPrefix+"all"+codeExpl, dur)
-					MetricTiming(statsPrefix+name+".all"+codeExpl, dur)
-				}
-			}
-		}()
-		ctx.Next()
-	})
+	a := &application{iris: iris.New()}
+	a.rootGroup = ServiceGroup{app: a}
+	a.iris.Use(rockMiddleware)
 	return a
 }
 
 var _ Application = (*application)(nil)
 
 type application struct {
-	iris *iris.Application
-
-	services      map[string]*Service
-	handlerStatus map[string]bool
+	iris      *iris.Application
+	rootGroup ServiceGroup
 }
 
 func (a *application) InitWithConfig(path string) error {
@@ -137,22 +71,16 @@ func (a *application) InitWithConfig(path string) error {
 		}
 		a.iris.Use(sentryMW)
 	}
+	a.rootGroup.name = metricPrefix
 	return nil
 }
 
 func (a *application) NewService(name, path string) *Service {
-	if name == "" {
-		defaultLogger.Warn("Service should named with non-zero length")
-	}
-	if path == "" || path[0] != '/' {
-		panic(fmt.Errorf("Service(%s) path(%s) should start with '/'", name, path))
-	}
-	if _, ok := a.services[name]; ok {
-		// TODO: warn name exist
-	}
-	s := &Service{app: a, path: path, name: name}
-	a.services[name] = s
-	return s
+	return a.rootGroup.NewService(name, path)
+}
+
+func (a *application) NewServiceGroup(name, path string) *ServiceGroup {
+	return a.rootGroup.NewServiceGroup(name, path)
 }
 
 func (a *application) Iris() *iris.Application {
