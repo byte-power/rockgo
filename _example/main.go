@@ -17,6 +17,11 @@ func main() {
 
 	logger := rock.Logger("Main")
 	logger.Debug("should not display")
+	if err := rock.ImportConfigFilesFromDirectory("settings"); err != nil {
+		logger.Error("failed to load config from settings", err.Error())
+	}
+	logger.Infof("loaded config: %v", rock.Config())
+	logger.Info("loaded config:", "a", rock.ConfigIn("jd.a"), "z", rock.ConfigIn("yd.z"))
 
 	app.Iris().OnErrorCode(http.StatusNotFound, func(ctx iris.Context) {
 		println("application.on404", ctx.Request().Method, ctx.Request().URL.String())
