@@ -80,7 +80,7 @@ func (l *Logger) LogPlainMessage(level Level, args ...interface{}) {
 // 内部逻辑与LogPlainMessage基本相同
 func (l *Logger) LogFormatted(level Level, format string, args ...interface{}) {
 	for _, it := range l.outpers {
-		if it.Level() >= level {
+		if it.Level() > level {
 			continue
 		}
 		it.LogFormatted(level, format, args)
