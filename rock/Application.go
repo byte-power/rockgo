@@ -48,7 +48,6 @@ func (a *application) InitWithConfig(path string) error {
 		for name, v := range cfgIt {
 			vs := util.AnyToAnyMap(v)
 			if vs == nil {
-				// TODO: warn parse failed
 				continue
 			}
 			logger, err := parseLogger(name, vs)

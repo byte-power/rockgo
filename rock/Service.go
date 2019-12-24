@@ -2,6 +2,7 @@ package rock
 
 import (
 	"errors"
+	"net/http"
 	"fmt"
 
 	"github.com/kataras/iris/v12"
@@ -16,19 +17,31 @@ type Service struct {
 }
 
 func (s *Service) Get(fn ...iris.Handler) *Service {
-	return s.handle("GET", fn)
+	return s.handle(http.MethodGet, fn)
 }
 func (s *Service) Post(fn ...iris.Handler) *Service {
-	return s.handle("POST", fn)
+	return s.handle(http.MethodPost, fn)
 }
 func (s *Service) Put(fn ...iris.Handler) *Service {
-	return s.handle("PUT", fn)
+	return s.handle(http.MethodPut, fn)
+}
+func (s *Service) Connect(fn ...iris.Handler) *Service {
+	return s.handle(http.MethodConnect, fn)
+}
+func (s *Service) Head(fn ...iris.Handler) *Service {
+	return s.handle(http.MethodHead, fn)
 }
 func (s *Service) Option(fn ...iris.Handler) *Service {
-	return s.handle("OPTION", fn)
+	return s.handle(http.MethodOptions, fn)
+}
+func (s *Service) Patch(fn ...iris.Handler) *Service {
+	return s.handle(http.MethodPatch, fn)
+}
+func (s *Service) Trace(fn ...iris.Handler) *Service {
+	return s.handle(http.MethodTrace, fn)
 }
 func (s *Service) Delete(fn ...iris.Handler) *Service {
-	return s.handle("DELETE", fn)
+	return s.handle(http.MethodDelete, fn)
 }
 
 func (s *Service) handle(method string, fn []iris.Handler) *Service {
@@ -42,7 +55,6 @@ func (s *Service) handle(method string, fn []iris.Handler) *Service {
 		s.group.registerHandlerStatus(method, path)
 		s.group.party.Handle(method, s.path, fn...)
 	}
-	defaultLogger.Infof("Service.handle %s %s %s", s.name, method, path)
 	return s
 }
 
@@ -73,7 +85,7 @@ func (g *ServiceGroup) NewService(name, path string) *Service {
 		name = g.name + "." + name
 	}
 	if _, ok := g.services[name]; ok {
-		// TODO: warn name exist
+		defaultLogger.Warn("Service name duplicated", "name", name)
 	}
 	s := &Service{app: g.app, group: g, path: path, name: name}
 	if g.services == nil {

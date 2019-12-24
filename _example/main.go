@@ -49,6 +49,7 @@ func main() {
 			id, _ := ctx.Params().GetInt("id")
 			ctx.ResponseWriter().Write([]byte(fmt.Sprintf("post user:%v", id)))
 		})
+	app.NewService("user", "/usr")
 	handleWorkspaces(app)
 
 	app.NewServiceGroup("g1", "/g").
