@@ -13,6 +13,7 @@ var loggers = map[string]*log.Logger{}
 var defaultLogger log.Logger
 
 // 取得在Application.Init初始化过的该名称对应的Logger
+// 若无对应的Logger，返回默认Logger
 func Logger(name string) *log.Logger {
 	if logger, ok := loggers[name]; ok {
 		return logger

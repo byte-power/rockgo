@@ -9,9 +9,9 @@ RockGo is fast, simple application framework for Go.
 	* [x] Basic middleware
 		* Access log
 		* recover & metric
-	* [60%] Logger integration
+	* [80%] Logger integration
 	* [x] Metric (Stats)
-	* [50%] Sentry
+	* [x] Sentry
 * Log
 	* [x] Logger, Output, Format
 	* [x] zap
