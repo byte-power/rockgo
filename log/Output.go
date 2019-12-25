@@ -16,6 +16,8 @@ func MakeFileOutput(name string, fmt LocalFormat, level Level, location string, 
 	return newZapFileLogger(name, fmt, level, location, rotation)
 }
 
-func MakeFluentOutput(level Level) Output {
-	return &FluentOutput{level: level}
+func MakeFluentOutput(level Level, host string, port int, tag string, async bool) Output {
+	fluent_logger := FluentOutput{level: level, host: host, port: port, tag: tag, async: async}
+	fluent_logger.Init()
+	return &fluent_logger
 }

@@ -1,6 +1,7 @@
 package rock
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/byte-power/rockgo/log"
@@ -36,7 +37,7 @@ func parseLogger(name string, m util.AnyMap) (*log.Logger, error) {
 			it := parseFileLogger(name, vs)
 			outputs = append(outputs, it)
 		case "fluent":
-			it := parseFluentLogger(vs)
+			it, _ := parseFluentLogger(vs)
 			outputs = append(outputs, it)
 		}
 	}
@@ -58,10 +59,25 @@ func parseFileLogger(name string, m util.AnyMap) log.Output {
 	return log.MakeFileOutput(name, fmt, level, location, rotation)
 }
 
-func parseFluentLogger(m util.AnyMap) log.Output {
-	// TODO:
+func parseFluentLogger(m util.AnyMap) (log.Output, error) {
 	level := parseLevel(m["level"])
-	return log.MakeFluentOutput(level)
+	if m["host"] == nil {
+		return nil, errors.New("fluent host must be specified in config.")
+	}
+	host := util.AnyToString(m["host"])
+	port := int(24224)
+	if m["port"] != nil {
+		port = int(util.AnyToInt64(m["port"]))
+	}
+	if m["tag"] == nil {
+		return nil, errors.New("fluent tag must be sepecified in config.")
+	}
+	tag := util.AnyToString(m["tag"])
+	async := false
+	if m["async"] != nil {
+		async = util.AnyToBool(m["async"])
+	}
+	return log.MakeFluentOutput(level, host, port, tag, async), nil
 }
 
 func parseFormat(m util.AnyMap) log.LocalFormat {

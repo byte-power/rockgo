@@ -92,13 +92,20 @@ func AnyToFloat64(value interface{}) float64 {
 		return 0
 	}
 	switch val := value.(type) {
-	case int:   return float64(val)
-	case int8:  return float64(val)
-	case int16: return float64(val)
-	case int32: return float64(val)
-	case int64: return float64(val)
-	case float32:   return float64(val)
-	case float64:   return val
+	case int:
+		return float64(val)
+	case int8:
+		return float64(val)
+	case int16:
+		return float64(val)
+	case int32:
+		return float64(val)
+	case int64:
+		return float64(val)
+	case float32:
+		return float64(val)
+	case float64:
+		return val
 	case *string:
 		if v, err := strconv.ParseFloat(*val, 64); err == nil {
 			return v
@@ -144,6 +151,23 @@ func AnyToBool(v interface{}) bool {
 	default:
 		return false
 	}
+}
+
+func AnyArrayToMap(mapInterface []interface{}) AnyMap {
+	elementMap := make(AnyMap)
+	for i := 0; i < len(mapInterface); i += 2 {
+		key := AnyToString(mapInterface[i])
+		elementMap[key] = mapInterface[i+1]
+	}
+	return elementMap
+}
+
+func AnyArrayToStringArray(arrInterface []interface{}) []string {
+	elementArray := make([]string, len(arrInterface))
+	for i, v := range arrInterface {
+		elementArray[i] = AnyToString(v)
+	}
+	return elementArray
 }
 
 func StringToInt64(value string) (int64, error) {
