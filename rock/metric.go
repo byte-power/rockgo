@@ -51,35 +51,45 @@ func initMetric(m util.AnyMap) (err error) {
 	return
 }
 
+// Metric pass statsd client to make custom record.
+//
+// Return: may be nil if not calling rock.Application#InitWithConfig() or not configure correctly.
 func Metric() *statsd.Client {
 	return managedMetricInstance
 }
 
+// MetricIncrease would increase count on 1 for key.
 func MetricIncrease(key string) {
-	if managedMetricInstance == nil {
-		return
+	if managedMetricInstance != nil {
+		managedMetricInstance.Increment(metricPrefix + "." + key)
 	}
-	managedMetricInstance.Increment(metricPrefix + "." + key)
 }
 
-// duration: time.Now().Sub(oldTime)
-func MetricTiming(key string, duration time.Duration) {
-	if managedMetricInstance == nil {
-		return
+// MetricDecrease would decrease count on 1 for key.
+func MetricDecrease(key string) {
+	if managedMetricInstance != nil {
+		managedMetricInstance.Count(metricPrefix + "." + key, -1)
 	}
-	managedMetricInstance.Timing(metricPrefix+"."+key, int(duration/time.Millisecond))
+}
+
+// MetricTiming would record time duration for key.
+//
+// Parameters:
+//   - duration: e.g. time.Now().Sub(oldTime) or time.Second * 4
+func MetricTiming(key string, duration time.Duration) {
+	if managedMetricInstance != nil {
+		managedMetricInstance.Timing(metricPrefix+"."+key, int(duration/time.Millisecond))
+	}
 }
 
 func MetricGauge(bucket string, value interface{}) {
-	if managedMetricInstance == nil {
-		return
+	if managedMetricInstance != nil {
+		managedMetricInstance.Gauge(bucket, value)
 	}
-	managedMetricInstance.Gauge(bucket, value)
 }
 
 func MetricHistogram(bucket string, value interface{}) {
-	if managedMetricInstance == nil {
-		return
+	if managedMetricInstance != nil {
+		managedMetricInstance.Histogram(bucket, value)
 	}
-	managedMetricInstance.Histogram(bucket, value)
 }
