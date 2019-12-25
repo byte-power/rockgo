@@ -87,6 +87,39 @@ func AnyToInt64(value interface{}) int64 {
 	return 0
 }
 
+func AnyToFloat64(value interface{}) float64 {
+	if value == nil {
+		return 0
+	}
+	switch val := value.(type) {
+	case int:   return float64(val)
+	case int8:  return float64(val)
+	case int16: return float64(val)
+	case int32: return float64(val)
+	case int64: return float64(val)
+	case float32:   return float64(val)
+	case float64:   return val
+	case *string:
+		if v, err := strconv.ParseFloat(*val, 64); err == nil {
+			return v
+		}
+	case string:
+		if v, err := strconv.ParseFloat(val, 64); err == nil {
+			return v
+		}
+	case bool:
+		if val {
+			return 1
+		} else {
+			return 0
+		}
+	case json.Number:
+		v, _ := val.Float64()
+		return v
+	}
+	return 0
+}
+
 func AnyToBool(v interface{}) bool {
 	if v == nil {
 		return false
