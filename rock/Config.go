@@ -27,7 +27,7 @@ func LoadConfigFromFile(path string, into interface{}) (err error) {
 			err = yaml.Unmarshal(content, into)
 		}
 	default:
-		err = errors.New("unsupported format")
+		err = errors.New(ErrNameUnsupportedFormat)
 	}
 	return
 }
@@ -59,7 +59,7 @@ func ImportConfigFromPaths(paths ...string) error {
 		basename := filepath.Base(path)
 		pos := strings.Index(basename, ".")
 		if pos <= 0 {
-			defaultLogger.Warnf("skipped config file '%s', it should named with ext")
+			defaultLogger.Warnf("skipped config file '%s', it should named with ext", basename)
 			continue
 		}
 		var content interface{}

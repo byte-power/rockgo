@@ -3,7 +3,6 @@ package rock
 import (
 	"errors"
 	"net/http"
-	"fmt"
 
 	"github.com/kataras/iris/v12"
 )
@@ -76,10 +75,7 @@ func (g *ServiceGroup) Use(mw ...iris.Handler) *ServiceGroup {
 
 func (g *ServiceGroup) NewService(name, path string) *Service {
 	if name == "" {
-		defaultLogger.Warn("Service should named with non-zero length")
-	}
-	if path == "" || path[0] != '/' {
-		panic(fmt.Errorf("Service(%s) path(%s) should start with '/'", name, path))
+		defaultLogger.Warn("Service should named with non-empty string")
 	}
 	if g.name != "" {
 		name = g.name + "." + name
@@ -97,10 +93,7 @@ func (g *ServiceGroup) NewService(name, path string) *Service {
 
 func (g *ServiceGroup) NewServiceGroup(name, path string) *ServiceGroup {
 	if name == "" {
-		defaultLogger.Warn("ServiceGroup should named with non-zero length")
-	}
-	if path == "" || path[0] != '/' {
-		panic(fmt.Errorf("ServiceGroup(%s) path(%s) should start with '/'", name, path))
+		defaultLogger.Warn("ServiceGroup should named with non-empty string")
 	}
 	if g.name != "" {
 		name = g.name + "." + name

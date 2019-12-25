@@ -5,21 +5,12 @@ import (
 
 	"github.com/byte-power/rockgo/log"
 	"github.com/byte-power/rockgo/util"
-	"github.com/kataras/iris/v12"
 )
-
-type PanicHandler func(ctx iris.Context, err error)
 
 var loggers = map[string]*log.Logger{}
 
 // 用默认的logger防止调用Logger(name)时对应logger不存在而得到空指针
 var defaultLogger log.Logger
-var panicHandler PanicHandler
-
-// 设置panic信息获取器，仅当sentry.repanic=true时生效
-func SetPanicHandler(fn PanicHandler) {
-	panicHandler = fn
-}
 
 // 取得在Application.Init初始化过的该名称对应的Logger
 func Logger(name string) *log.Logger {
@@ -34,7 +25,7 @@ func parseLogger(name string, m util.AnyMap) (*log.Logger, error) {
 	for k, v := range m {
 		vs := util.AnyToAnyMap(v)
 		if vs == nil && v != nil {
-			return nil, fmt.Errorf("parse Logger失败：%v不是map", k)
+			return nil, fmt.Errorf("'log.%v' should be map", k)
 		}
 		switch k {
 		case "console":
