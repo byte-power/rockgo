@@ -80,7 +80,7 @@ func (a *application) InitWithConfig(path string) error {
 		initMetric(cfgIt)
 	}
 	if cfgIt := util.AnyToAnyMap(cfg["sentry"]); cfgIt != nil {
-		sentryMW, err := initSentryMiddleware(parseSentryOption(cfgIt))
+		sentryMW, err := newSentryMiddleware(parseSentryOption(cfgIt))
 		if err != nil {
 			return util.NewError(ErrNameApplicationInitFailure, err)
 		}
