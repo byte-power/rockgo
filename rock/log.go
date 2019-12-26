@@ -22,9 +22,9 @@ func Logger(name string) *log.Logger {
 	return &defaultLogger
 }
 
-func parseLogger(appName, name string, m util.AnyMap) (*log.Logger, error) {
+func parseLogger(appName, name string, cfg util.AnyMap) (*log.Logger, error) {
 	var outputs []log.Output
-	for k, v := range m {
+	for k, v := range cfg {
 		vs := util.AnyToAnyMap(v)
 		if vs == nil && v != nil {
 			return nil, fmt.Errorf("'log.%v' should be map", k)
@@ -44,53 +44,53 @@ func parseLogger(appName, name string, m util.AnyMap) (*log.Logger, error) {
 	return log.NewLogger(outputs...), nil
 }
 
-func parseConsoleLogger(name string, m util.AnyMap) log.Output {
-	fmt := parseFormat(m)
-	level := parseLevel(m["level"])
-	stream := log.MakeConsoleStream(util.AnyToString(m["stream"]))
+func parseConsoleLogger(name string, cfg util.AnyMap) log.Output {
+	fmt := parseFormat(cfg)
+	level := parseLevel(cfg["level"])
+	stream := log.MakeConsoleStream(util.AnyToString(cfg["stream"]))
 	return log.MakeConsoleOutput(name, fmt, level, stream)
 }
 
-func parseFileLogger(name string, m util.AnyMap) log.Output {
-	fmt := parseFormat(m)
-	level := parseLevel(m["level"])
-	location := util.AnyToString(m["location"])
-	rotation := parseFileRotation(util.AnyToAnyMap(m["rotation"]))
+func parseFileLogger(name string, cfg util.AnyMap) log.Output {
+	fmt := parseFormat(cfg)
+	level := parseLevel(cfg["level"])
+	location := util.AnyToString(cfg["location"])
+	rotation := parseFileRotation(util.AnyToAnyMap(cfg["rotation"]))
 	return log.MakeFileOutput(name, fmt, level, location, rotation)
 }
 
-func parseFluentLogger(m util.AnyMap) (log.Output, error) {
-	level := parseLevel(m["level"])
-	if m["host"] == nil {
+func parseFluentLogger(cfg util.AnyMap) (log.Output, error) {
+	level := parseLevel(cfg["level"])
+	if cfg["host"] == nil {
 		return nil, errors.New("fluent host must be specified in config.")
 	}
-	host := util.AnyToString(m["host"])
+	host := util.AnyToString(cfg["host"])
 	port := int(24224)
-	if m["port"] != nil {
-		port = int(util.AnyToInt64(m["port"]))
+	if cfg["port"] != nil {
+		port = int(util.AnyToInt64(cfg["port"]))
 	}
-	if m["tag"] == nil {
+	if cfg["tag"] == nil {
 		return nil, errors.New("fluent tag must be sepecified in config.")
 	}
-	tag := util.AnyToString(m["tag"])
+	tag := util.AnyToString(cfg["tag"])
 	async := false
-	if m["async"] != nil {
-		async = util.AnyToBool(m["async"])
+	if cfg["async"] != nil {
+		async = util.AnyToBool(cfg["async"])
 	}
 	return log.MakeFluentOutput(level, host, port, tag, async), nil
 }
 
-func parseFormat(m util.AnyMap) log.LocalFormat {
-	msgFMT := parseMessageFormat(m["format"])
+func parseFormat(cfg util.AnyMap) log.LocalFormat {
+	msgFMT := parseMessageFormat(cfg["format"])
 	fmt := log.MakeLocalFormat(msgFMT)
-	if keys := util.AnyToAnyMap(m["keys"]); keys != nil {
+	if keys := util.AnyToAnyMap(cfg["keys"]); keys != nil {
 		fmt.CallerKey = util.AnyToString(keys["caller"])
 		fmt.TimeKey = util.AnyToString(keys["time"])
 		fmt.MessageKey = util.AnyToString(keys["message"])
 		fmt.LevelKey = util.AnyToString(keys["level"])
 		fmt.NameKey = util.AnyToString(keys["name"])
 	}
-	if timeFMT, ok := m["time_format"].(string); ok {
+	if timeFMT, ok := cfg["time_format"].(string); ok {
 		fmt.TimeFormat = log.MakeTimeFormat(timeFMT)
 	}
 	return fmt
@@ -106,15 +106,15 @@ func parseLevel(v interface{}) log.Level {
 	return log.MakeLevelWithName(name)
 }
 
-func parseFileRotation(m util.AnyMap) log.FileRotation {
+func parseFileRotation(cfg util.AnyMap) log.FileRotation {
 	return log.FileRotation{
-		MaxSize:      int(util.AnyToInt64(m["max_size"])),
-		Compress:     util.AnyToBool(m["compress"]),
-		MaxAge:       int(util.AnyToInt64(m["max_age"])),
-		MaxBackups:   int(util.AnyToInt64(m["max_backups"])),
-		LocalTime:    util.AnyToBool(m["localtime"]),
-		RotateOnTime: util.AnyToBool(m["rotate_on_time"]),
-		RotatePeriod: util.AnyToString(m["rotate_period"]),
-		RotateAfter:  int(util.AnyToInt64(m["rotate_after"])),
+		MaxSize:      int(util.AnyToInt64(cfg["max_size"])),
+		Compress:     util.AnyToBool(cfg["compress"]),
+		MaxAge:       int(util.AnyToInt64(cfg["max_age"])),
+		MaxBackups:   int(util.AnyToInt64(cfg["max_backups"])),
+		LocalTime:    util.AnyToBool(cfg["localtime"]),
+		RotateOnTime: util.AnyToBool(cfg["rotate_on_time"]),
+		RotatePeriod: util.AnyToString(cfg["rotate_period"]),
+		RotateAfter:  int(util.AnyToInt64(cfg["rotate_after"])),
 	}
 }

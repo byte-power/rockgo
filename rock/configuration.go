@@ -50,13 +50,16 @@ var sharedConfig = util.AnyMap{}
 // Load multiple config files
 // and then store in a shared map with key by filename (stripped ext), e.g. abc for abc.json.
 //
-// Return: each got error
+// - Return: each got error
 func ImportConfigFromPaths(paths ...string) error {
 	for _, path := range paths {
-		if path == "" || path[0] == '.' {
+		if path == "" {
 			continue
 		}
 		basename := filepath.Base(path)
+		if basename == "." || basename == ".." {
+			continue
+		}
 		pos := strings.Index(basename, ".")
 		if pos <= 0 {
 			defaultLogger.Warnf("skipped config file '%s', it should named with ext", basename)
@@ -75,7 +78,7 @@ func ImportConfigFromPaths(paths ...string) error {
 //
 // Load each file in the [dir] without recursive by ImportConfigFromPaths()
 //
-// Return: each got error
+// - Return: each got error
 func ImportConfigFilesFromDirectory(dir string) error {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {

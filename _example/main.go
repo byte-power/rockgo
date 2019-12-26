@@ -10,16 +10,13 @@ import (
 )
 
 func main() {
-	app := rock.NewApplication()
-	if err := app.InitWithConfig("config.yaml"); err != nil {
+	app, err := rock.NewApplication("settings")
+	if err != nil {
 		panic(err)
 	}
 
 	logger := rock.Logger("Main")
 	logger.Debug("should not display")
-	if err := rock.ImportConfigFilesFromDirectory("settings"); err != nil {
-		logger.Error("failed to load config from settings", err.Error())
-	}
 	logger.Infof("loaded config: %v", rock.Config())
 	logger.Info("loaded config:", "a", rock.ConfigIn("jd.a"), "z", rock.ConfigIn("yd.z"))
 

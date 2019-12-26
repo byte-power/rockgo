@@ -26,6 +26,7 @@ RockGo is fast, simple application framework for Go.
 * Test case
 	* [ ] Log
 	* [ ] Crypto
+	* [x] utility
 
 ## Example
 Please visit [example](/tree/master/_example).
@@ -39,14 +40,14 @@ $ go get github.com/byte-power/rockgo
 ```go
 import "github.com/byte-power/rockgo/rock"
 ```
-* Add config for internal modules (optional)
+* Add config file named "rockgo.yaml" for internal modules on your settings directory
 ```yaml
+app_name: myapp
 log:
   LoggerName:
     console:
 metric:
   host: "127.0.0.1:8125"
-  prefix: myapp
 sentry:
   dsn: "http://user@127.0.0.1/1"
   repanic: true
@@ -55,10 +56,12 @@ sentry:
 * Append routes & Run server
 ```go
 func main() {
-	app := rock.NewApplication()
-	if err := app.InitWithConfig("config.yaml"); err != nil {
+	// load each config file include rockgo.yaml in the directory to create Application
+	app, err := rock.NewApplication("settings")
+	if err != nil {
 		panic(err)
 	}
+	// register route handler with Service
 	app.NewService("root", "/").Get(func(ctx iris.Context) {
 		ctx.StatusCode(http.StatusOK)
 	})

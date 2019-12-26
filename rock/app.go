@@ -1,50 +1,60 @@
 package rock
 
 import (
+	"fmt"
+
 	"github.com/byte-power/rockgo/util"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/core/host"
 )
 
+const ConfigFilename = "rockgo"
+
 type Application interface {
 	Name() string
-
-	// 载入config_rock，以初始化各个内部模块，并自动添加用于异常恢复的recover和sentry中间件、记录基础metric信息的中间件
-	//
-	// InitWithConfig would load config from <path>, and then init each internal components.
-	//
-	// config file at <path> should have extension 'json' for JSON format, or 'yaml' / 'yml' for YAML format.
-	InitWithConfig(path string) error
 
 	// Get iris application.
 	Iris() *iris.Application
 
 	// NewService make Service to register handler.
 	//
-	// Parameters:
+	// - Parameters:
 	//   - name: for statsd
 	//   - path: path from root, e.g. "foo" for "/foo"
 	NewService(name, path string) *Service
 
 	// NewServiceGroup make ServiceGroup to handle multiple Services.
 	//
-	// Parameters:
+	// - Parameters:
 	//   - name: for statsd
 	//   - path: directory name in path from root
 	NewServiceGroup(name, path string) *ServiceGroup
 
 	// Run server with <host> and multiple [conf].
 	//
-	// Parameters:
+	// - Parameters:
 	//   - host: [server name] with port. e.g. "mydomain.com:80" or ":8080" (equal "0.0.0.0:8080")
 	Run(host string, conf ...host.Configurator)
 }
 
-func NewApplication() Application {
+// NewApplication would load config files from <configDir>, and then make Application with rockgo.yaml (or json) in <configDir>.
+func NewApplication(configDir string) (Application, error) {
+	err := ImportConfigFilesFromDirectory(configDir)
+	if err != nil {
+		return nil, util.NewError(ErrNameApplicationInitFailure, err)
+	}
+	cfg := util.AnyToAnyMap(sharedConfig[ConfigFilename])
+	if cfg == nil {
+		return nil, fmt.Errorf("%s %s/%s.yaml (or json) not exists", ErrNameApplicationInitFailure, configDir, ConfigFilename)
+	}
 	a := &application{iris: iris.New()}
 	a.rootGroup = ServiceGroup{app: a}
+	err = a.init(cfg)
+	if err != nil {
+		return nil, util.NewError(ErrNameApplicationInitFailure, err)
+	}
 	a.iris.Use(rockMiddleware)
-	return a
+	return a, nil
 }
 
 var _ Application = (*application)(nil)
@@ -59,13 +69,7 @@ func (a *application) Name() string {
 	return a.name
 }
 
-func (a *application) InitWithConfig(path string) error {
-	// read config
-	var cfg util.AnyMap
-	err := LoadConfigFromFile(path, &cfg)
-	if err != nil {
-		return util.NewError(ErrNameApplicationInitFailure, err)
-	}
+func (a *application) init(cfg util.AnyMap) error {
 	appName := util.AnyToString(cfg["app_name"])
 	// create loggers
 	if cfgIt := util.AnyToAnyMap(cfg["log"]); cfgIt != nil {
@@ -76,7 +80,7 @@ func (a *application) InitWithConfig(path string) error {
 			}
 			logger, err := parseLogger(appName, name, vs)
 			if err != nil {
-				return util.NewError(ErrNameApplicationInitFailure, err)
+				return err
 			}
 			loggers[name] = logger
 		}
@@ -90,7 +94,7 @@ func (a *application) InitWithConfig(path string) error {
 	if cfgIt := util.AnyToAnyMap(cfg["sentry"]); cfgIt != nil {
 		sentryMW, err := newSentryMiddleware(parseSentryOption(cfgIt))
 		if err != nil {
-			return util.NewError(ErrNameApplicationInitFailure, err)
+			return err
 		}
 		a.iris.Use(sentryMW)
 	}
