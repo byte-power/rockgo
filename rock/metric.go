@@ -11,7 +11,7 @@ import (
 var managedMetricInstance *statsd.Client
 var metricPrefix string
 
-func initMetric(m util.AnyMap) (err error) {
+func initMetric(prefix string, m util.AnyMap) (err error) {
 	var opts []statsd.Option
 	if it, ok := m["host"]; ok {
 		if host, ok := it.(string); ok {
@@ -21,10 +21,8 @@ func initMetric(m util.AnyMap) (err error) {
 			return
 		}
 	}
-	if it, ok := m["prefix"].(string); ok {
-		metricPrefix = it
-		opts = append(opts, statsd.Prefix(it))
-	}
+	metricPrefix = prefix
+	opts = append(opts, statsd.Prefix(prefix))
 	if it := util.AnyToInt64(m["max_packet_size"]); it > 0 {
 		opts = append(opts, statsd.MaxPacketSize(int(it)))
 	}

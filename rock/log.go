@@ -22,7 +22,7 @@ func Logger(name string) *log.Logger {
 	return &defaultLogger
 }
 
-func parseLogger(name string, m util.AnyMap) (*log.Logger, error) {
+func parseLogger(appName, name string, m util.AnyMap) (*log.Logger, error) {
 	var outputs []log.Output
 	for k, v := range m {
 		vs := util.AnyToAnyMap(v)

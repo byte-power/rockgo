@@ -1,3 +1,4 @@
+app_name: rockgo
 log:
   default:
     console:
@@ -14,7 +15,6 @@ log:
 metric:
   host: "127.0.0.1:8125"
   max_packet_size: 10
-  prefix: rockgo
 sentry:
   dsn: "http://user@127.0.0.1/1"
   repanic: true

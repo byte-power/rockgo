@@ -7,6 +7,8 @@ import (
 )
 
 type Application interface {
+	Name() string
+
 	// 载入config_rock，以初始化各个内部模块，并自动添加用于异常恢复的recover和sentry中间件、记录基础metric信息的中间件
 	//
 	// InitWithConfig would load config from <path>, and then init each internal components.
@@ -48,8 +50,13 @@ func NewApplication() Application {
 var _ Application = (*application)(nil)
 
 type application struct {
+	name      string
 	iris      *iris.Application
 	rootGroup ServiceGroup
+}
+
+func (a *application) Name() string {
+	return a.name
 }
 
 func (a *application) InitWithConfig(path string) error {
@@ -59,6 +66,7 @@ func (a *application) InitWithConfig(path string) error {
 	if err != nil {
 		return util.NewError(ErrNameApplicationInitFailure, err)
 	}
+	appName := util.AnyToString(cfg["app_name"])
 	// create loggers
 	if cfgIt := util.AnyToAnyMap(cfg["log"]); cfgIt != nil {
 		for name, v := range cfgIt {
@@ -66,7 +74,7 @@ func (a *application) InitWithConfig(path string) error {
 			if vs == nil {
 				continue
 			}
-			logger, err := parseLogger(name, vs)
+			logger, err := parseLogger(appName, name, vs)
 			if err != nil {
 				return util.NewError(ErrNameApplicationInitFailure, err)
 			}
@@ -77,7 +85,7 @@ func (a *application) InitWithConfig(path string) error {
 		defaultLogger = *it
 	}
 	if cfgIt := util.AnyToAnyMap(cfg["metric"]); cfgIt != nil {
-		initMetric(cfgIt)
+		initMetric(appName, cfgIt)
 	}
 	if cfgIt := util.AnyToAnyMap(cfg["sentry"]); cfgIt != nil {
 		sentryMW, err := newSentryMiddleware(parseSentryOption(cfgIt))
@@ -86,7 +94,11 @@ func (a *application) InitWithConfig(path string) error {
 		}
 		a.iris.Use(sentryMW)
 	}
-	a.rootGroup.name = metricPrefix
+	if appName == "" {
+		defaultLogger.Warnf("'app_name' was not defined or it is empty in config (statsd and fluent depended on it).")
+	}
+	a.name = appName
+	a.rootGroup.name = a.name
 	return nil
 }
 

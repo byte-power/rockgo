@@ -67,6 +67,6 @@ func main() {
 			panic("PanicErrInfo")
 		})
 
-	logger.Info("Server running...")
+	logger.Infof("Server %v running...", app.Name())
 	app.Run(":8080")
 }
