@@ -12,6 +12,8 @@ require (
 	github.com/kataras/iris/v12 v12.1.1
 	github.com/klauspost/compress v1.9.4 // indirect
 	github.com/philhofer/fwd v1.0.0 // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/stretchr/testify v1.4.0
 	github.com/tinylib/msgp v1.1.1 // indirect
 	go.uber.org/atomic v1.5.1 // indirect
 	go.uber.org/multierr v1.4.0 // indirect
@@ -21,5 +23,5 @@ require (
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.7
 )

@@ -1,8 +1,9 @@
 package rock
 
 import (
-	"github.com/byte-power/rockgo/util"
 	"testing"
+
+	"github.com/byte-power/rockgo/util"
 )
 
 func TestFluentLog(t *testing.T) {
