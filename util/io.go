@@ -21,11 +21,5 @@ func ReadFileFromPath(path string) ([]byte, error) {
 		return nil, err
 	}
 	defer fp.Close()
-	stat, err := fp.Stat()
-	if err != nil {
-		return nil, err
-	}
-	bs := make([]byte, stat.Size())
-	_, err = fp.Read(bs)
-	return bs, err
+	return ReadBytes(fp)
 }
