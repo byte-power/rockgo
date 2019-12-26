@@ -64,6 +64,9 @@ func main() {
 			panic("PanicErrInfo")
 		})
 
+	// Handle directory access
+	app.NewService("settings", "/conf").HandleDir("settings")
+
 	logger.Infof("Server %v running...", app.Name())
 	app.Run(":8080")
 }

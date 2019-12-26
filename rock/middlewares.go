@@ -30,7 +30,7 @@ func MakeAccessLog(ctx iris.Context, t time.Time) string {
 	req := ctx.Request()
 	return fmt.Sprintf("%s - - [%s] \"%s %s %s\" %v %v",
 		ctx.RemoteAddr(), t.Format(timeFormat),
-		req.Method, req.URL.Path, req.Proto,
+		req.Method, req.RequestURI, req.Proto,
 		ctx.GetStatusCode(), ctx.ResponseWriter().Header().Get("Content-Length"))
 }
 

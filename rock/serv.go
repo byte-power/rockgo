@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/core/router"
 )
 
 type Service struct {
@@ -44,17 +45,28 @@ func (s *Service) Delete(fn ...iris.Handler) *Service {
 }
 
 func (s *Service) handle(method string, fn []iris.Handler) *Service {
-	path := s.path
 	if s.group.party == nil {
-		s.group.registerHandlerStatus(method, path)
-		route := s.app.iris.Handle(method, path, fn...)
+		s.group.registerHandlerStatus(method, s.path)
+		route := s.app.iris.Handle(method, s.path, fn...)
 		route.MainHandlerName = s.name
 	} else {
-		path = s.group.path+path
-		s.group.registerHandlerStatus(method, path)
+		s.group.registerHandlerStatus(method, s.group.path+s.path)
 		s.group.party.Handle(method, s.path, fn...)
 	}
 	return s
+}
+
+// HandleDir would serve static files.
+// - Parameters:
+//   - dir: Directory path
+func (s *Service) HandleDir(dir string, opts ...router.DirOptions) {
+	if s.group.party == nil {
+		s.group.registerHandlerStatus("DIR", s.path)
+		s.app.iris.HandleDir(s.path, dir, opts...)
+	} else {
+		s.group.registerHandlerStatus("DIR", s.group.path+s.path)
+		s.group.party.HandleDir(s.path, dir, opts...)
+	}
 }
 
 type ServiceGroup struct {
@@ -82,6 +94,9 @@ func (g *ServiceGroup) NewService(name, path string) *Service {
 	}
 	if _, ok := g.services[name]; ok {
 		defaultLogger.Warn("Service name duplicated", "name", name)
+	}
+	if path == "/" || path[0] != '/' {
+		path = "/" + path
 	}
 	s := &Service{app: g.app, group: g, path: path, name: name}
 	if g.services == nil {
