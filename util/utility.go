@@ -154,10 +154,13 @@ func AnyToBool(v interface{}) bool {
 }
 
 func AnyArrayToMap(mapInterface []interface{}) AnyMap {
+	if len(mapInterface)/2 < 1 {
+		return nil
+	}
 	elementMap := make(AnyMap)
-	for i := 0; i < len(mapInterface); i += 2 {
-		key := AnyToString(mapInterface[i])
-		elementMap[key] = mapInterface[i+1]
+	for i := 0; i < len(mapInterface)/2; i += 1 {
+		key := AnyToString(mapInterface[i*2])
+		elementMap[key] = mapInterface[i*2+1]
 	}
 	return elementMap
 }

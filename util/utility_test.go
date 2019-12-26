@@ -91,3 +91,16 @@ func TestFindInMap(t *testing.T) {
 		t.Error("FindInAnyMap 'b' != []int")
 	}
 }
+
+func TestAnyArrayToMap(t *testing.T) {
+	elements := []interface{}{"abc"}
+	m := AnyArrayToMap(elements)
+	if m != nil {
+		t.Error("Should be nil if length of input < 2.")
+	}
+	elements2 := []interface{}{"abc", "bd", "cc"}
+	m2 := AnyArrayToMap(elements2)
+	if len(m2) != 1 {
+		t.Error("Generated map length should 1.")
+	}
+}
