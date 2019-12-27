@@ -2,6 +2,33 @@ package log
 
 import "os"
 
+type Level int
+
+const (
+	LevelDebug = 1 << iota
+	LevelInfo
+	LevelWarn
+	LevelError
+	LevelFatal
+)
+
+func MakeLevelWithName(name string) Level {
+	switch name {
+	case "info":
+		return LevelInfo
+	case "warn":
+		return LevelWarn
+	case "error":
+		return LevelError
+	case "fatal":
+		return LevelFatal
+	default:
+		return LevelDebug
+	}
+}
+
+// -------------------------------
+
 type MessageFormat string
 
 const (
@@ -24,6 +51,8 @@ func (f MessageFormat) isJSON() bool {
 	return f == MessageFormatJSON
 }
 
+// -------------------------------
+
 type TimeFormat string
 
 const (
@@ -45,6 +74,8 @@ func MakeTimeFormat(raw string) TimeFormat {
 		return TimeFormatISO8601
 	}
 }
+
+// -------------------------------
 
 type LocalFormat struct {
 	Format MessageFormat
@@ -69,6 +100,8 @@ func MakeLocalFormat(msg MessageFormat) LocalFormat {
 		TimeFormat: TimeFormatISO8601,
 	}
 }
+
+// -------------------------------
 
 type ConsoleStream string
 
@@ -97,20 +130,22 @@ func (s ConsoleStream) stream() *os.File {
 	}
 }
 
+// -------------------------------
+
 // Rotation stores configs for the log rotation.
 // See more in https://github.com/natefinch/lumberjack/tree/v2.0
 type FileRotation struct {
-	MaxSize    int  `mapstructure:"max_size"`
-	Compress   bool `mapstructure:"compress"`
-	MaxAge     int  `mapstructure:"max_age"`
-	MaxBackups int  `mapstructure:"max_backups"`
-	LocalTime  bool `mapstructure:"localtime"`
+	MaxSize    int
+	Compress   bool
+	MaxAge     int
+	MaxBackups int
+	LocalTime  bool
 	// RotateOnTime enables log rotation based on time.
-	RotateOnTime bool `mapstructure:"rotate_on_time"`
+	RotateOnTime bool
 	// RotatePeriod is the period for log rotation.
 	// Supports daily(d), hourly(h), minute(m) and second(s).
-	RotatePeriod string `mapstructure:"rotate_period"`
+	RotatePeriod string
 	// RotateAfter sets a value for time based rotation.
 	// Log file rotates every RotateAfter * RotatePeriod.
-	RotateAfter int `mapstructure:"rotate_after"`
+	RotateAfter int
 }
