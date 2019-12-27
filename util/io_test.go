@@ -1,15 +1,14 @@
 package util
 
-import "testing"
+import (
+	"bytes"
+	"testing"
 
-import "bytes"
+	"github.com/stretchr/testify/assert"
+)
 
 func TestReading(t *testing.T) {
 	bsIO, err := ReadFileFromPath("io.go")
-	if err != nil {
-		t.Error("ReadFile io.go failed", err)
-	}
-	if !bytes.HasPrefix(bsIO, []byte("package")) {
-		t.Error("ReadFile io.go has no prefix 'package'")
-	}
+	assert.NoError(t, err)
+	assert.True(t, bytes.HasPrefix(bsIO, []byte("package")), "ReadFile io.go has no prefix 'package'")
 }

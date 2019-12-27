@@ -3,93 +3,46 @@ package util
 import (
 	"fmt"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAnyTo(t *testing.T) {
 	m := AnyMap{"1": 1}
-	if AnyToAnyMap(m) == nil {
-		t.Error("AnyToAnyMap(AnyMap{}) failed")
-	}
-	if AnyToAnyMap(map[interface{}]interface{}{1: 1}) == nil {
-		t.Error("AnyToAnyMap(map[interface{}]interface{}{}) failed")
-	}
+	assert.Equal(t, m, AnyToAnyMap(m))
+	assert.Equal(t, m, AnyToAnyMap(map[interface{}]interface{}{1: 1}))
+	assert.Equal(t, "1", AnyToString(1))
+	assert.Equal(t, "-1", AnyToString(-1))
+	assert.Equal(t, "1.5", AnyToString(1.5))
+	assert.Equal(t, "true", AnyToString(true))
+	assert.Equal(t, fmt.Sprint(m), AnyToString(m))
 
-	if AnyToString(1) != "1" {
-		t.Error("AnyToString(1) != '1'")
-	}
-	if AnyToString(-1) != "-1" {
-		t.Error("AnyToString(-1) != '-1'")
-	}
-	if AnyToString(1.5) != "1.5" {
-		t.Error("AnyToString(1.5) != '1.5'")
-	}
-	if AnyToString(true) != "true" {
-		t.Error("AnyToString(true) != 'true'")
-	}
-	if AnyToString(m) != fmt.Sprint(m) {
-		t.Error("AnyToString(m) == fmt.Sprint(m)")
-	}
+	assert.Equal(t, int64(1), AnyToInt64(1.5))
+	assert.Equal(t, int64(1), AnyToInt64(true))
+	assert.Equal(t, int64(10), AnyToInt64("10"))
+	assert.Equal(t, int64(10), AnyToInt64("10.5"))
+	assert.Equal(t, int64(0), AnyToInt64("10a"))
 
-	if AnyToInt64(1.5) != 1 {
-		t.Error("AnyToInt64(1.5) != 1")
-	}
-	if AnyToInt64(true) != 1 {
-		t.Error("AnyToInt64(true) != 1")
-	}
-	if AnyToInt64("10") != 10 {
-		t.Error("AnyToInt64('10') != 10")
-	}
-	if AnyToInt64("10.5") != 10 {
-		t.Error("AnyToInt64('10.5') != 10")
-	}
-	if AnyToInt64("10a") != 0 {
-		t.Error("AnyToInt64('10a') != 0")
-	}
+	assert.Equal(t, float64(1), AnyToFloat64(1))
+	assert.Equal(t, float64(1), AnyToFloat64("1"))
+	assert.Equal(t, float64(0), AnyToFloat64("1a"))
+	assert.Equal(t, float64(1), AnyToFloat64(true))
 
-	if AnyToFloat64(1) != 1.0 {
-		t.Error("AnyToFloat64(1) != 1.0")
-	}
-	if AnyToFloat64("1") != 1.0 {
-		t.Error("AnyToFloat64('1') != 1.0")
-	}
-	if AnyToFloat64("1a") != 0 {
-		t.Error("AnyToFloat64('1a') != 1.0")
-	}
-	if AnyToFloat64(true) != 1.0 {
-		t.Error("AnyToFloat64(true) != 1.0")
-	}
-
-	if AnyToBool(1) != true {
-		t.Error("AnyToBool(1) != true")
-	}
-	if AnyToBool(1.5) != true {
-		t.Error("AnyToBool(1.5) != true")
-	}
-	if AnyToBool("1") != true {
-		t.Error("AnyToBool('1') != true")
-	}
-	if AnyToBool("T") != true {
-		t.Error("AnyToBool('T') != true")
-	}
+	assert.Equal(t, true, AnyToBool(1))
+	assert.Equal(t, true, AnyToBool(1.5))
+	assert.Equal(t, true, AnyToBool("1"))
+	assert.Equal(t, true, AnyToBool("T"))
 }
 
 func TestFindInMap(t *testing.T) {
 	m3 := AnyMap{"aaa": 1.5}
+	arr := []int{1, 2}
 	m := AnyMap{
-		"a": AnyMap{
-			"aa": m3,
-		},
-		"b": []int{1, 2},
+		"a": AnyMap{"aa": m3},
+		"b": arr,
 	}
-	if FindInAnyMap(m, "a", "aa", "aaa") != 1.5 {
-		t.Error("FindInAnyMap 'a.aa.aaa' != 1.5")
-	}
-	if FindInAnyMap(m, "a", "aa", "aab") != nil {
-		t.Error("FindInAnyMap 'a.aa.aab' != nil")
-	}
-	if _, ok := FindInAnyMap(m, "b").([]int); !ok {
-		t.Error("FindInAnyMap 'b' != []int")
-	}
+	assert.Equal(t, 1.5, FindInAnyMap(m, "a", "aa", "aaa"))
+	assert.Equal(t, nil, FindInAnyMap(m, "a", "aa", "aab"))
+	assert.Equal(t, arr, FindInAnyMap(m, "b").([]int))
 }
 
 func TestAnyArrayToMap(t *testing.T) {

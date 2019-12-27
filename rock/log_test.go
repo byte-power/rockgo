@@ -3,7 +3,9 @@ package rock
 import (
 	"testing"
 
+	"github.com/byte-power/rockgo/log"
 	"github.com/byte-power/rockgo/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFluentLog(t *testing.T) {
@@ -24,4 +26,19 @@ func TestFluentLog(t *testing.T) {
 	if logger == nil {
 		t.Error("Create FluentLogger failed.")
 	}
+}
+
+func TestParseLogComponents(t *testing.T) {
+	assert.Equal(t, log.LevelDebug, parseLevel(nil))
+	assert.Equal(t, log.LevelDebug, parseLevel("Debug"))
+	assert.Equal(t, log.LevelInfo, parseLevel("inFo"))
+	assert.Equal(t, log.LevelWarn, parseLevel("Warn"))
+	assert.Equal(t, log.LevelError, parseLevel("erroR"))
+	assert.Equal(t, log.LevelFatal, parseLevel("fatAl"))
+	assert.Equal(t, log.MessageFormatJSON, parseMessageFormat("json"))
+	assert.Equal(t, log.MessageFormatText, parseMessageFormat("text"))
+	assert.Equal(t, log.TimeFormatISO8601, log.MakeTimeFormat("iso8601"))
+	assert.Equal(t, log.TimeFormatSeconds, log.MakeTimeFormat("seconds"))
+	assert.Equal(t, log.TimeFormatMillis, log.MakeTimeFormat("millis"))
+	assert.Equal(t, log.TimeFormatNanos, log.MakeTimeFormat("nanos"))
 }
