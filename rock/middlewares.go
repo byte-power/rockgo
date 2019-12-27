@@ -72,7 +72,7 @@ func newRockMiddleware(app *application) context.Handler {
 
 func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 	route := ctx.GetCurrentRoute()
-	if route == nil || Metric() != nil {
+	if route == nil || Metric() == nil {
 		return
 	}
 	name := route.MainHandlerName()

@@ -108,7 +108,6 @@ func (a *application) init(cfg util.AnyMap) error {
 		defaultLogger.Warnf("'app_name' was not defined or it is empty in config (statsd and fluent depended on it).")
 	}
 	a.name = appName
-	a.rootGroup.name = a.name
 	return nil
 }
 
