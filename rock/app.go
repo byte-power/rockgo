@@ -10,11 +10,17 @@ import (
 
 const ConfigFilename = "rockgo"
 
+type PanicHandler func(ctx iris.Context, err error)
+
 type Application interface {
+	// Name returns app_name in rockgo config.
 	Name() string
 
-	// Get iris application.
+	// Iris returns iris application.
 	Iris() *iris.Application
+
+	// Set panic handler, only work on sentry.repanic is true.
+	SetPanicHandler(fn PanicHandler)
 
 	// NewService make Service to register handler.
 	//
@@ -53,16 +59,16 @@ func NewApplication(configDir string) (Application, error) {
 	if err != nil {
 		return nil, util.NewError(ErrNameApplicationInitFailure, err)
 	}
-	a.iris.Use(rockMiddleware)
+	a.iris.Use(newRockMiddleware(a))
 	return a, nil
 }
-
-var _ Application = (*application)(nil)
 
 type application struct {
 	name      string
 	iris      *iris.Application
 	rootGroup ServiceGroup
+
+	panicHandler PanicHandler
 }
 
 func (a *application) Name() string {
@@ -116,6 +122,10 @@ func (a *application) NewServiceGroup(name, path string) *ServiceGroup {
 
 func (a *application) Iris() *iris.Application {
 	return a.iris
+}
+
+func (a *application) SetPanicHandler(fn PanicHandler) {
+	a.panicHandler = fn
 }
 
 func (a *application) Run(host string, conf ...host.Configurator) {

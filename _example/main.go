@@ -26,7 +26,7 @@ func main() {
 
 	app.Iris().Use(rock.NewAccessLogMiddleware(rock.Logger("Access")))
 
-	rock.SetPanicHandler(func(ctx iris.Context, err error) {
+	app.SetPanicHandler(func(ctx iris.Context, err error) {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.Text(string(debug.Stack()))
 		rock.Logger("Main").Error(err.Error())

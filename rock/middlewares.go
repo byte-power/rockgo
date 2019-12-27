@@ -41,30 +41,32 @@ func MakeAccessLog(ctx iris.Context, t time.Time) string {
 		ctx.ResponseWriter().Header().Get("Content-Length"))
 }
 
-func rockMiddleware(ctx iris.Context) {
-	startHandleTime := time.Now()
-	defer func() {
-		recovered := recover()
-		if recovered != nil {
-			var err error
-			switch v := recovered.(type) {
-			case error:
-				err = v
-			case string:
-				err = errors.New(v)
-			default:
-				err = errors.New(util.AnyToString(v))
+func newRockMiddleware(app *application) context.Handler {
+	return func(ctx iris.Context) {
+		startHandleTime := time.Now()
+		defer func() {
+			recovered := recover()
+			if recovered != nil {
+				var err error
+				switch v := recovered.(type) {
+				case error:
+					err = v
+				case string:
+					err = errors.New(v)
+				default:
+					err = errors.New(util.AnyToString(v))
+				}
+				if fn := app.panicHandler; fn != nil {
+					fn(ctx, err)
+				} else {
+					ctx.StatusCode(http.StatusInternalServerError)
+					ctx.JSON(util.AnyMap{"error": err.Error()})
+				}
 			}
-			if fn := panicHandler; fn != nil {
-				fn(ctx, err)
-			} else {
-				ctx.StatusCode(http.StatusInternalServerError)
-				ctx.JSON(util.AnyMap{"error": err.Error()})
-			}
-		}
-		recordMetric(ctx, startHandleTime)
-	}()
-	ctx.Next()
+			recordMetric(ctx, startHandleTime)
+		}()
+		ctx.Next()
+	}
 }
 
 func recordMetric(ctx iris.Context, startHandleTime time.Time) {
