@@ -9,13 +9,13 @@ RockGo is fast, simple application framework for Go.
 	* [x] Basic middleware
 		* Access log
 		* recover & metric
-	* [80%] Logger integration
+	* [x] Logger integration
 	* [x] Metric (Stats)
 	* [x] Sentry
 * Log
 	* [x] Logger, Output, Format
 	* [x] zap
-	* [10%] fluent
+	* [x] fluent
 * Crypto
 	* [ ] AES
 	* [ ] Digest (MD5, SHA1/256/512)
@@ -46,6 +46,11 @@ app_name: myapp
 log:
   LoggerName:
     console:
+    fluent:
+      level: info
+      host: "myfluenthost.com"
+      port: 24224
+      async: true
 metric:
   host: "127.0.0.1:8125"
 sentry:
