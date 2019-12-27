@@ -12,6 +12,12 @@ log:
   Access:
     console:
       keys: {message: "M"}
+    fluent:
+      level: "info"
+      host: "127.0.0.1"
+      port: 24224
+      asyc: true
+
 metric:
   host: "127.0.0.1:8125"
   max_packet_size: 10

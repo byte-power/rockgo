@@ -37,6 +37,7 @@ func parseLogger(appName, name string, cfg util.AnyMap) (*log.Logger, error) {
 			it := parseFileLogger(name, vs)
 			outputs = append(outputs, it)
 		case "fluent":
+			vs["tag"] = fmt.Sprintf("%s.%s", appName, name)
 			it, _ := parseFluentLogger(vs)
 			outputs = append(outputs, it)
 		}
