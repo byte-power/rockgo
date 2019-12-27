@@ -18,6 +18,7 @@ const (
 	apiPrefix  = "api."
 )
 
+// NewAccessLogMiddleware make iris middleware to log access log with Info.
 func NewAccessLogMiddleware(logger *log.Logger) context.Handler {
 	return func(ctx iris.Context) {
 		ctx.Next()
