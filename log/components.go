@@ -2,10 +2,12 @@ package log
 
 import "os"
 
+import "strings"
+
 type Level int
 
 const (
-	LevelDebug = 1 << iota
+	LevelDebug Level = 1 << iota
 	LevelInfo
 	LevelWarn
 	LevelError
@@ -13,7 +15,7 @@ const (
 )
 
 func MakeLevelWithName(name string) Level {
-	switch name {
+	switch strings.ToLower(name) {
 	case "info":
 		return LevelInfo
 	case "warn":
@@ -39,7 +41,7 @@ const (
 // MakeMessageFormat would product MessageFormat with raw string.
 // MessageFormatText would be default returning if no matched.
 func MakeMessageFormat(raw string) MessageFormat {
-	switch raw {
+	switch strings.ToLower(raw) {
 	case string(MessageFormatJSON):
 		return MessageFormatJSON
 	default:
@@ -63,7 +65,7 @@ const (
 )
 
 func MakeTimeFormat(raw string) TimeFormat {
-	switch raw {
+	switch strings.ToLower(raw) {
 	case string(TimeFormatSeconds):
 		return TimeFormatSeconds
 	case string(TimeFormatMillis):
@@ -111,7 +113,7 @@ const (
 )
 
 func MakeConsoleStream(raw string) ConsoleStream {
-	switch raw {
+	switch strings.ToLower(raw) {
 	case string(ConsoleStreamStderr):
 		return ConsoleStreamStderr
 	default:
@@ -121,12 +123,10 @@ func MakeConsoleStream(raw string) ConsoleStream {
 
 func (s ConsoleStream) stream() *os.File {
 	switch s {
-	case ConsoleStreamStdout:
-		return os.Stdout
 	case ConsoleStreamStderr:
 		return os.Stderr
 	default:
-		return nil
+		return os.Stdout
 	}
 }
 

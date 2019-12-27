@@ -17,7 +17,7 @@ func NewLogger(outpers ...Output) *Logger {
 }
 
 func MakeConsoleOutput(name string, fmt LocalFormat, level Level, stream ConsoleStream) Output {
-	return newZapConsoleLogger(name, fmt, level, stream)
+	return newZapConsoleLogger(name, fmt, level, stream.stream())
 }
 
 func MakeFileOutput(name string, fmt LocalFormat, level Level, location string, rotation FileRotation) Output {

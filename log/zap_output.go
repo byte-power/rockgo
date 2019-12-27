@@ -79,8 +79,8 @@ func (o *zapOutput) LogFormatted(l Level, format string, args []interface{}) {
 	}
 }
 
-func newZapConsoleLogger(name string, fmt LocalFormat, level Level, stream ConsoleStream) *zapOutput {
-	writer := zapcore.Lock(stream.stream())
+func newZapConsoleLogger(name string, fmt LocalFormat, level Level, stream zapcore.WriteSyncer) *zapOutput {
+	writer := zapcore.Lock(stream)
 	encoder := makeZapEncoder(fmt.Format.isJSON(), makeZapEncoderConfig(fmt))
 	core := zapcore.NewCore(encoder, writer, makeZapLevel(level))
 	output := zap.New(core,
