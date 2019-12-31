@@ -10,11 +10,11 @@ import (
 )
 
 func handleWorkspaces(app rock.Application) {
-	app.NewService("workspaces", "/workspaces").
+	app.Serve("workspaces", "/workspaces").
 		Get(func(ctx iris.Context) {
 			ctx.ResponseWriter().Write([]byte("workspaces: ..."))
 		})
-	app.NewService("workspace", "/workspace/{id:int}").
+	app.Serve("workspace", "/workspace/{id:int}").
 		Get(func(ctx iris.Context) {
 			id, _ := strconv.Atoi(ctx.Params().Get("id"))
 			if id <= 0 {
@@ -27,7 +27,7 @@ func handleWorkspaces(app rock.Application) {
 			rock.Logger("WS").Info("Put", "id", ctx.Params().Get("id"))
 		}).
 		Delete(handleWorkspaceDelete)
-	app.NewService("delete_workspace", "/delete_workspace/{id:int}").
+	app.Serve("delete_workspace", "/delete_workspace/{id:int}").
 		Delete(handleWorkspaceDelete)
 }
 

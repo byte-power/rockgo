@@ -80,12 +80,17 @@ type ServiceGroup struct {
 	handlerStatus map[string]bool
 }
 
+// Use middlewares into application or party.
 func (g *ServiceGroup) Use(mw ...iris.Handler) *ServiceGroup {
-	g.party.Use(mw...)
+	if g.party == nil {
+		g.app.Iris().Use(mw...)
+	} else {
+		g.party.Use(mw...)
+	}
 	return g
 }
 
-func (g *ServiceGroup) NewService(name, path string) *Service {
+func (g *ServiceGroup) Serve(name, path string) *Service {
 	if name == "" {
 		defaultLogger.Warn("Service should named with non-empty string")
 	}
@@ -106,7 +111,7 @@ func (g *ServiceGroup) NewService(name, path string) *Service {
 	return s
 }
 
-func (g *ServiceGroup) NewServiceGroup(name, path string) *ServiceGroup {
+func (g *ServiceGroup) ServeGroup(name, path string) *ServiceGroup {
 	if name == "" {
 		defaultLogger.Warn("ServiceGroup should named with non-empty string")
 	}

@@ -33,12 +33,12 @@ func main() {
 		rock.Logger("Main").Error(err.Error())
 	})
 
-	app.NewService("", "/").
+	app.Serve("", "/").
 		Get(func(ctx iris.Context) {
 			ctx.StatusCode(http.StatusOK)
 		})
 
-	app.NewService("user", "/user/{id:int min(1)}").
+	app.Serve("user", "/user/{id:int min(1)}").
 		Get(func(ctx iris.Context) {
 			id, err := ctx.Params().GetInt("id")
 			ctx.ResponseWriter().Write([]byte(fmt.Sprintf("get user:%v(%v)", id, err)))
@@ -47,26 +47,28 @@ func main() {
 			id, _ := ctx.Params().GetInt("id")
 			ctx.ResponseWriter().Write([]byte(fmt.Sprintf("post user:%v", id)))
 		})
-	app.NewService("user", "/usr")
+	app.Serve("user", "/usr")
 	handleWorkspaces(app)
 
-	app.NewServiceGroup("g1", "/g").
-		Use(func(ctx iris.Context) {
-			println("g1 only middleware")
-			ctx.Next()
-		}).
-		NewService("a", "/a").
-			Get(func(ctx iris.Context) {
-				ctx.Text("get a")
-			})
+	g1 := app.ServeGroup("g1", "/g")
+	g1.Use(func(ctx iris.Context) {
+		println("g1 only middleware")
+		ctx.Next()
+	})
+	g1.Serve("a", "/a").Get(func(ctx iris.Context) {
+		ctx.Text("get /g/a")
+	})
+	g1.ServeGroup("2", "/2").Serve("3", "/3").Get(func(ctx iris.Context) {
+		ctx.Text("get /g/2/3")
+	})
 
-	app.NewService("fatal", "/fatal").
+	app.Serve("fatal", "/fatal").
 		Get(func(ctx iris.Context) {
 			panic("PanicErrInfo")
 		})
 
 	// Handle directory access
-	app.NewService("settings", "/conf").HandleDir("settings")
+	app.Serve("settings", "/conf").HandleDir("settings")
 
 	logger.Infof("Server %v running...", app.Name())
 	app.Run(":8080")

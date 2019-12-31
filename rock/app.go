@@ -22,19 +22,19 @@ type Application interface {
 	// Set panic handler, it would working on sentry.repanic is true only.
 	SetPanicHandler(fn PanicHandler)
 
-	// NewService make Service to register handler.
+	// Serve make Service to register handler.
 	//
 	// - Parameters:
 	//   - name: for statsd
 	//   - path: path from root, e.g. "foo" for "/foo"
-	NewService(name, path string) *Service
+	Serve(name, path string) *Service
 
-	// NewServiceGroup make ServiceGroup to handle multiple Services like directory.
+	// ServeGroup make ServiceGroup to handle multiple Services like directory.
 	//
 	// - Parameters:
 	//   - name: for statsd
 	//   - path: directory name in path from root
-	NewServiceGroup(name, path string) *ServiceGroup
+	ServeGroup(name, path string) *ServiceGroup
 
 	// Run server with <host> and multiple [conf].
 	//
@@ -111,12 +111,12 @@ func (a *application) init(cfg util.AnyMap) error {
 	return nil
 }
 
-func (a *application) NewService(name, path string) *Service {
-	return a.rootGroup.NewService(name, path)
+func (a *application) Serve(name, path string) *Service {
+	return a.rootGroup.Serve(name, path)
 }
 
-func (a *application) NewServiceGroup(name, path string) *ServiceGroup {
-	return a.rootGroup.NewServiceGroup(name, path)
+func (a *application) ServeGroup(name, path string) *ServiceGroup {
+	return a.rootGroup.ServeGroup(name, path)
 }
 
 func (a *application) Iris() *iris.Application {
