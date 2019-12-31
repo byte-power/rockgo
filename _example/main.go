@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 
 	"github.com/byte-power/rockgo/rock"
-	"github.com/byte-power/rockgo/rock/middlewares/accesslog"
+	"github.com/byte-power/rockgo/middlewares/accesslog"
 	"github.com/kataras/iris/v12"
 )
 
