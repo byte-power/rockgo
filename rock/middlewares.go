@@ -18,7 +18,7 @@ const (
 	apiPrefix  = "api."
 )
 
-// NewAccessLogMiddleware make iris middleware to log access log with Info.
+// NewAccessLogMiddleware make iris middleware to log access log with <logger> by log.LevelInfo.
 func NewAccessLogMiddleware(logger *log.Logger) context.Handler {
 	return func(ctx iris.Context) {
 		ctx.Next()
@@ -29,6 +29,7 @@ func NewAccessLogMiddleware(logger *log.Logger) context.Handler {
 	}
 }
 
+// MakeAccessLog with iris.Context and time.
 // ref: https://en.wikipedia.org/wiki/Common_Log_Format
 func MakeAccessLog(ctx iris.Context, t time.Time) string {
 	req := ctx.Request()

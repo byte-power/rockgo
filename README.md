@@ -17,16 +17,12 @@ RockGo is fast, simple application framework for Go.
 	* [x] zap
 	* [x] fluent
 * Crypto
-	* [ ] AES
-	* [ ] Digest (MD5, SHA1/256/512)
-	* [ ] RSA
+	* [x] AES
+	* [x] Digest (MD5, SHA1/256/512)
+	* [x] RSA
 * Example
 	* [x] Route - Application, Config
 	* [ ] Metric & Sentry
-* Test case
-	* [ ] Log
-	* [ ] Crypto
-	* [x] utility
 
 ## Example
 Please visit [example](/tree/master/_example).

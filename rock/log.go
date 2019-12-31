@@ -10,11 +10,11 @@ import (
 
 var loggers = map[string]*log.Logger{}
 
-// 用默认的logger防止调用Logger(name)时对应logger不存在而得到空指针
+// The default logger to avoid Logger(name) return nil if named logger not defined.
 var defaultLogger log.Logger
 
-// 取得在Application.Init初始化过的该名称对应的Logger
-// 若无对应的Logger，返回默认Logger
+// Logger would return initialized logger with <name> from rock config, you should call it after NewApplication.
+// - Return: Named logger, or default logger.
 func Logger(name string) *log.Logger {
 	if logger, ok := loggers[name]; ok {
 		return logger

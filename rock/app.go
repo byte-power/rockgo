@@ -19,7 +19,7 @@ type Application interface {
 	// Iris returns iris application.
 	Iris() *iris.Application
 
-	// Set panic handler, only work on sentry.repanic is true.
+	// Set panic handler, it would working on sentry.repanic is true only.
 	SetPanicHandler(fn PanicHandler)
 
 	// NewService make Service to register handler.
@@ -29,7 +29,7 @@ type Application interface {
 	//   - path: path from root, e.g. "foo" for "/foo"
 	NewService(name, path string) *Service
 
-	// NewServiceGroup make ServiceGroup to handle multiple Services.
+	// NewServiceGroup make ServiceGroup to handle multiple Services like directory.
 	//
 	// - Parameters:
 	//   - name: for statsd

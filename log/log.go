@@ -30,10 +30,11 @@ func MakeFluentOutput(level Level, host string, port int, tag string, async bool
 	return &fluent_logger
 }
 
-// 发送可结构化的消息
-// argPairs被视为键值对，键或值为nil的将不被记录
-// 本地log：直接发给zap.w处理
-// fluent log：将在内部拼成map {"msg": msg, arg0: arg1, arg2: arg3, ...}，msg仅当参数msg非空串才会被记录
+// 发送可转换为key-value结构的消息.
+// - Parameters:
+//   - argPairs: 键值对列表，键或值为nil的将不被记录
+// console: 直接发给zap.w处理
+// fluent: 拼成map {"message": msg, "data": {arg0: arg1, arg2: arg3, ...}}
 func (l *Logger) Log(level Level, msg string, argPairs ...interface{}) {
 	for _, it := range l.outpers {
 		if level >= it.Level() {
@@ -58,9 +59,9 @@ func (l *Logger) Fatal(msg string, args ...interface{}) {
 	l.Log(LevelFatal, msg, args...)
 }
 
-// 发送可结构化的消息
-// 本地log：解构后发给zap.w处理
-// fluent log：直接发送
+// 发送消息
+// console: 解构后发给zap.w处理
+// fluent: 直接发送
 func (l *Logger) LogMap(level Level, msg string, values map[string]interface{}) {
 	for _, it := range l.outpers {
 		if it.Level() >= level {
@@ -87,8 +88,8 @@ func (l *Logger) Fatalm(msg string, values map[string]interface{}) {
 }
 
 // 发送简单消息
-// 本地log：直接发给zap处理
-// fluent log：args如仅包含一个map，会用它发给fluent，若有多个将合并为信息字符串，并将map[string]interface{}{"m":信息字符串}发给fluent
+// console: 直接发给zap处理
+// fluent: 将所有args串接起来调用fluent output的LogMap(level, joinedString, nil)
 func (l *Logger) LogPlainMessage(level Level, args ...interface{}) {
 	for _, it := range l.outpers {
 		if it.Level() >= level {
@@ -98,8 +99,7 @@ func (l *Logger) LogPlainMessage(level Level, args ...interface{}) {
 	}
 }
 
-// 发送格式化后的简单消息
-// 内部逻辑与LogPlainMessage基本相同
+// 发送格式化后的简单消息，逻辑与LogPlainMessage基本相同
 func (l *Logger) LogFormatted(level Level, format string, args ...interface{}) {
 	for _, it := range l.outpers {
 		if it.Level() > level {
