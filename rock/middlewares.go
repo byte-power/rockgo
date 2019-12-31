@@ -2,46 +2,16 @@ package rock
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/byte-power/rockgo/log"
 	"github.com/byte-power/rockgo/util"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/context"
 )
 
-const (
-	timeFormat = "02/Jan/2006:15:04:05 -0700"
-	apiPrefix  = "api."
-)
-
-// NewAccessLogMiddleware make iris middleware to log access log with <logger> by log.LevelInfo.
-func NewAccessLogMiddleware(logger *log.Logger) context.Handler {
-	return func(ctx iris.Context) {
-		ctx.Next()
-		if logger != nil {
-			l := MakeAccessLog(ctx, time.Now())
-			logger.Info(l)
-		}
-	}
-}
-
-// MakeAccessLog with iris.Context and time.
-// ref: https://en.wikipedia.org/wiki/Common_Log_Format
-func MakeAccessLog(ctx iris.Context, t time.Time) string {
-	req := ctx.Request()
-	return fmt.Sprintf("%s - - [%s] \"%s %s %s\" %v %v",
-		ctx.RemoteAddr(),
-		t.Format(timeFormat),
-		req.Method,
-		req.RequestURI,
-		req.Proto,
-		ctx.GetStatusCode(),
-		ctx.ResponseWriter().Header().Get("Content-Length"))
-}
+const apiPrefix = "api."
 
 func newRockMiddleware(app *application) context.Handler {
 	return func(ctx iris.Context) {

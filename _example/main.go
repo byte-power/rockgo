@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 
 	"github.com/byte-power/rockgo/rock"
+	"github.com/byte-power/rockgo/rock/middlewares/accesslog"
 	"github.com/kataras/iris/v12"
 )
 
@@ -24,7 +25,7 @@ func main() {
 		println("application.on404", ctx.Request().Method, ctx.Request().URL.String())
 	})
 
-	app.Iris().Use(rock.NewAccessLogMiddleware(rock.Logger("Access")))
+	app.Iris().Use(accesslog.New(rock.Logger("Access")))
 
 	app.SetPanicHandler(func(ctx iris.Context, err error) {
 		ctx.StatusCode(http.StatusInternalServerError)
