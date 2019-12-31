@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"github.com/byte-power/rockgo/util"
 	"go.uber.org/zap/zapcore"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
@@ -38,7 +37,7 @@ func (o *zapOutput) Log(l Level, msg string, argPairs []interface{}) {
 	}
 }
 
-func (o *zapOutput) LogMap(l Level, msg string, values util.AnyMap) {
+func (o *zapOutput) LogMap(l Level, msg string, values map[string]interface{}) {
 	var args []interface{}
 	if count := len(values); count > 0 {
 		args = make([]interface{}, 0, count*2)

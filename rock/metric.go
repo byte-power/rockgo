@@ -38,7 +38,7 @@ func initMetric(prefix string, cfg util.AnyMap) (err error) {
 	if it, ok := cfg["sample_rate"]; ok {
 		opts = append(opts, statsd.SampleRate(float32(util.AnyToFloat64(it))))
 	}
-	if it := util.AnyToAnyMap(cfg["tags"]); it != nil {
+	if it := util.AnyToStrMap(cfg["tags"]); it != nil {
 		tags := make([]string, 0, len(it)*2)
 		for k, v := range it {
 			tags = append(tags, k, util.AnyToString(v))

@@ -49,7 +49,7 @@ func NewApplication(configDir string) (Application, error) {
 	if err != nil {
 		return nil, util.NewError(ErrNameApplicationInitFailure, err)
 	}
-	cfg := util.AnyToAnyMap(sharedConfig[ConfigFilename])
+	cfg := util.AnyToAnyMap(ConfigIn(ConfigFilename))
 	if cfg == nil {
 		return nil, fmt.Errorf("%s %s/%s.yaml (or json) not exists", ErrNameApplicationInitFailure, configDir, ConfigFilename)
 	}
@@ -78,7 +78,7 @@ func (a *application) Name() string {
 func (a *application) init(cfg util.AnyMap) error {
 	appName := util.AnyToString(cfg["app_name"])
 	// create loggers
-	if cfgIt := util.AnyToAnyMap(cfg["log"]); cfgIt != nil {
+	if cfgIt := util.AnyToStrMap(cfg["log"]); cfgIt != nil {
 		for name, v := range cfgIt {
 			vs := util.AnyToAnyMap(v)
 			if vs == nil {

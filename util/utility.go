@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 )
 
-type AnyMap = map[string]interface{}
+type StrMap = map[string]interface{}
+type AnyMap = map[interface{}]interface{}
 
 func AnyToAnyMap(value interface{}) AnyMap {
 	if value == nil {
@@ -16,13 +18,35 @@ func AnyToAnyMap(value interface{}) AnyMap {
 	switch val := value.(type) {
 	case AnyMap:
 		return val
-	case map[interface{}]interface{}:
+	case StrMap:
 		count := len(val)
 		if count == 0 {
 			return nil
 		}
 		m := make(AnyMap, count)
 		for k, v := range val {
+			m[k] = v
+		}
+		return m
+	default:
+		return nil
+	}
+}
+
+func AnyToStrMap(value interface{}) StrMap {
+	if value == nil {
+		return nil
+	}
+	switch v := value.(type) {
+	case StrMap:
+		return v
+	case AnyMap:
+		l := len(v)
+		if l == 0 {
+			return nil
+		}
+		m := make(StrMap, l)
+		for k, v := range v {
 			m[AnyToString(k)] = v
 		}
 		return m
@@ -37,6 +61,9 @@ func AnyToString(value interface{}) string {
 	}
 	switch val := value.(type) {
 	case *string:
+		if val == nil {
+			return ""
+		}
 		return *val
 	case string:
 		return val
@@ -62,7 +89,20 @@ func AnyToInt64(value interface{}) int64 {
 		return int64(val)
 	case int64:
 		return val
+	case uint:
+		return int64(val)
+	case uint8:
+		return int64(val)
+	case uint16:
+		return int64(val)
+	case uint32:
+		return int64(val)
+	case uint64:
+		return int64(val)
 	case *string:
+		if val == nil {
+			return 0
+		}
 		if i, err := StringToInt64(*val); err == nil {
 			return i
 		}
@@ -77,9 +117,8 @@ func AnyToInt64(value interface{}) int64 {
 	case bool:
 		if val {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	case json.Number:
 		v, _ := val.Int64()
 		return v
@@ -106,7 +145,20 @@ func AnyToFloat64(value interface{}) float64 {
 		return float64(val)
 	case float64:
 		return val
+	case uint:
+		return float64(val)
+	case uint8:
+		return float64(val)
+	case uint16:
+		return float64(val)
+	case uint32:
+		return float64(val)
+	case uint64:
+		return float64(val)
 	case *string:
+		if val == nil {
+			return 0
+		}
 		if v, err := strconv.ParseFloat(*val, 64); err == nil {
 			return v
 		}
@@ -117,9 +169,8 @@ func AnyToFloat64(value interface{}) float64 {
 	case bool:
 		if val {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	case json.Number:
 		v, _ := val.Float64()
 		return v
@@ -136,6 +187,24 @@ func AnyToBool(v interface{}) bool {
 		return v
 	case int:
 		return v != 0
+	case int8:
+		return v != 0
+	case int16:
+		return v != 0
+	case int32:
+		return v != 0
+	case int64:
+		return v != 0
+	case uint:
+		return v != 0
+	case uint8:
+		return v != 0
+	case uint16:
+		return v != 0
+	case uint32:
+		return v != 0
+	case uint64:
+		return v != 0
 	case float32:
 		return v != 0
 	case float64:
@@ -147,17 +216,17 @@ func AnyToBool(v interface{}) bool {
 		c := strings.ToLower(v[0:1])
 		return c == "y" || c == "t" || c == "1"
 	case *string:
-		return AnyToBool(*v)
+		return v != nil && AnyToBool(*v)
 	default:
 		return false
 	}
 }
 
-func AnyArrayToMap(mapInterface []interface{}) AnyMap {
+func AnyArrayToStrMap(mapInterface []interface{}) StrMap {
 	if len(mapInterface)/2 < 1 {
 		return nil
 	}
-	elementMap := make(AnyMap)
+	elementMap := make(StrMap)
 	for i := 0; i < len(mapInterface)/2; i += 1 {
 		key := AnyToString(mapInterface[i*2])
 		elementMap[key] = mapInterface[i*2+1]
@@ -180,11 +249,37 @@ func StringToInt64(value string) (int64, error) {
 	return strconv.ParseInt(value, 10, 64)
 }
 
-func FindInAnyMap(m AnyMap, keys ...string) interface{} {
+func FindInSyncMap(m *sync.Map, keys ...interface{}) interface{} {
+	return FindInSyncMapWithKeys(m, keys)
+}
+
+func FindInSyncMapWithKeys(m *sync.Map, keys []interface{}) interface{} {
+	if m == nil {
+		return nil
+	}
+	l := len(keys)
+	if l == 0 {
+		return nil
+	}
+	v0, ok := m.Load(keys[0])
+	if !ok || l == 1 {
+		return v0
+	}
+	switch v := v0.(type) {
+	case StrMap:
+		return FindInStrMapWithKeys(v, keys[1:])
+	case AnyMap:
+		return FindInAnyMapWithKeys(v, keys[1:])
+	default:
+		return nil
+	}
+}
+
+func FindInAnyMap(m AnyMap, keys ...interface{}) interface{} {
 	return FindInAnyMapWithKeys(m, keys)
 }
 
-func FindInAnyMapWithKeys(m AnyMap, keys []string) interface{} {
+func FindInAnyMapWithKeys(m AnyMap, keys []interface{}) interface{} {
 	if m == nil {
 		return nil
 	}
@@ -196,6 +291,38 @@ func FindInAnyMapWithKeys(m AnyMap, keys []string) interface{} {
 	if l == 1 {
 		return value
 	}
-	m = AnyToAnyMap(value)
-	return FindInAnyMapWithKeys(m, keys[1:])
+	switch v := value.(type) {
+	case AnyMap:
+		return FindInAnyMapWithKeys(v, keys[1:])
+	case StrMap:
+		return FindInStrMapWithKeys(v, keys[1:])
+	default:
+		return nil
+	}
+}
+
+func FindInStrMap(m StrMap, keys ...interface{}) interface{} {
+	return FindInStrMapWithKeys(m, keys)
+}
+
+func FindInStrMapWithKeys(m StrMap, keys []interface{}) interface{} {
+	if m == nil {
+		return nil
+	}
+	l := len(keys)
+	if l == 0 {
+		return nil
+	}
+	value := m[AnyToString(keys[0])]
+	if l == 1 {
+		return value
+	}
+	switch v := value.(type) {
+	case AnyMap:
+		return FindInAnyMapWithKeys(v, keys[1:])
+	case StrMap:
+		return FindInStrMapWithKeys(v, keys[1:])
+	default:
+		return nil
+	}
 }

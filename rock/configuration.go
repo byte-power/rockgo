@@ -2,10 +2,11 @@ package rock
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"errors"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/byte-power/rockgo/util"
 	"gopkg.in/yaml.v2"
@@ -43,13 +44,12 @@ func readNonEmptyFile(path string) ([]byte, error) {
 	return content, nil
 }
 
-var sharedConfig = util.AnyMap{}
+var sharedConfig sync.Map
 
-// 载入多个配置文件，遇到任何错误将立即返回
-//
-// Load multiple config files
-// and then store in a shared map with key by filename (stripped ext), e.g. abc for abc.json.
-//
+// ImportConfigFromPaths load multiple config files.
+// And then store in a shared map with key by filename (stripped ext), e.g. abc for abc.json.
+// - Parameters:
+//   - paths: Path list to be loaded, empty string would be ignored.
 // - Return: each got error
 func ImportConfigFromPaths(paths ...string) error {
 	for _, path := range paths {
@@ -69,15 +69,14 @@ func ImportConfigFromPaths(paths ...string) error {
 		if err := LoadConfigFromFile(path, &content); err != nil {
 			return err
 		}
-		sharedConfig[basename[:pos]] = content
+		sharedConfig.Store(basename[:pos], content)
 	}
 	return nil
 }
-// 载入指定目录下的所有文件（不递归）
-// 文件将按照文件名作为map中的key，如app.yaml的内容将保存至data["app"]
-//
-// Load each file in the [dir] without recursive by ImportConfigFromPaths()
-//
+
+// Load each file in the <dir> without recursive by ImportConfigFromPaths().
+// Contents of file would be stored in shared config with filename (without extension).
+// e.g. app.yaml would use "app" as key.
 // - Return: each got error
 func ImportConfigFilesFromDirectory(dir string) error {
 	files, err := ioutil.ReadDir(dir)
@@ -88,7 +87,7 @@ func ImportConfigFilesFromDirectory(dir string) error {
 		if file.IsDir() {
 			continue
 		}
-		err = ImportConfigFromPaths(dir + "/" + file.Name())
+		err = ImportConfigFromPaths(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return err
 		}
@@ -96,16 +95,21 @@ func ImportConfigFilesFromDirectory(dir string) error {
 	return nil
 }
 
-// 按以.分隔的keyPath查找配置
-//
-// Find value in map key path from shared configs
+// Find value from shared configs with <keyPath> delimited by ".".
 func ConfigIn(keyPath string) interface{} {
-	return util.FindInAnyMapWithKeys(sharedConfig, strings.Split(keyPath, "."))
+	if strings.Contains(keyPath, ".") {
+		comps := strings.Split(keyPath, ".")
+		keys := make([]interface{}, len(comps))
+		for i, v := range comps {
+			keys[i] = v
+		}
+		return util.FindInSyncMapWithKeys(&sharedConfig, keys)
+	}
+	v, _ := sharedConfig.Load(keyPath)
+	return v
 }
 
-// 载入的所有配置
-//
 // Get shared configs
-func Config() map[string]interface{} {
-	return sharedConfig
+func Config() *sync.Map {
+	return &sharedConfig
 }

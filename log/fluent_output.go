@@ -34,7 +34,7 @@ func (o *FluentOutput) Init() {
 }
 
 func (o *FluentOutput) Log(l Level, msg string, argPairs []interface{}) {
-	args := util.AnyArrayToMap(argPairs)
+	args := util.AnyArrayToStrMap(argPairs)
 	o.LogMap(l, msg, args)
 }
 
