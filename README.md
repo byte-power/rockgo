@@ -2,6 +2,8 @@
 
 RockGo is fast, simple application framework for Go.
 
+RockGo is agent to iris, fluentd, statsd, zap and sentry too. It make easy to build perfect application or service.
+
 ## Features
 * Application
 	* [x] Service, ServiceGroup

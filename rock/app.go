@@ -123,6 +123,10 @@ func (a *application) Iris() *iris.Application {
 	return a.iris
 }
 
+func (a *application) PanicHandler() PanicHandler {
+	return a.panicHandler
+}
+
 func (a *application) SetPanicHandler(fn PanicHandler) {
 	a.panicHandler = fn
 }

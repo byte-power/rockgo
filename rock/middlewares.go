@@ -13,7 +13,11 @@ import (
 
 const apiPrefix = "api."
 
-func newRockMiddleware(app *application) context.Handler {
+type panicHandlerProvider interface {
+	PanicHandler() PanicHandler
+}
+
+func newRockMiddleware(provider panicHandlerProvider) context.Handler {
 	return func(ctx iris.Context) {
 		startHandleTime := time.Now()
 		defer func() {
@@ -28,7 +32,11 @@ func newRockMiddleware(app *application) context.Handler {
 				default:
 					err = errors.New(util.AnyToString(v))
 				}
-				if fn := app.panicHandler; fn != nil {
+				var fn PanicHandler
+				if provider != nil {
+					fn = provider.PanicHandler()
+				}
+				if fn != nil {
 					fn(ctx, err)
 				} else {
 					ctx.StatusCode(http.StatusInternalServerError)
