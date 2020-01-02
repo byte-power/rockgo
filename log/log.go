@@ -64,10 +64,9 @@ func (l *Logger) Fatal(msg string, args ...interface{}) {
 // fluent: 直接发送
 func (l *Logger) LogMap(level Level, msg string, values map[string]interface{}) {
 	for _, it := range l.outpers {
-		if it.Level() >= level {
-			continue
+		if level >= it.Level() {
+			it.LogMap(level, msg, values)
 		}
-		it.LogMap(level, msg, values)
 	}
 }
 
@@ -92,20 +91,18 @@ func (l *Logger) Fatalm(msg string, values map[string]interface{}) {
 // fluent: 将所有args串接起来调用fluent output的LogMap(level, joinedString, nil)
 func (l *Logger) LogPlainMessage(level Level, args ...interface{}) {
 	for _, it := range l.outpers {
-		if it.Level() >= level {
-			continue
+		if level >= it.Level() {
+			it.LogPlainMessage(level, args)
 		}
-		it.LogPlainMessage(level, args)
 	}
 }
 
 // 发送格式化后的简单消息，逻辑与LogPlainMessage基本相同
 func (l *Logger) LogFormatted(level Level, format string, args ...interface{}) {
 	for _, it := range l.outpers {
-		if it.Level() > level {
-			continue
+		if level >= it.Level() {
+			it.LogFormatted(level, format, args)
 		}
-		it.LogFormatted(level, format, args)
 	}
 }
 
