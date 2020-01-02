@@ -84,5 +84,7 @@ func main() {
 
 	logger.Infof("Server %v running...", app.Name())
 	// make application run up, you can change host or port, or append some iris configuration
-	app.Run(":8080")
+	if err := app.Run(":8080"); err != nil {
+		panic(err)
+	}
 }

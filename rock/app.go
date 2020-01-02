@@ -40,7 +40,7 @@ type Application interface {
 	//
 	// - Parameters:
 	//   - host: [server name] with port. e.g. "mydomain.com:80" or ":8080" (equal "0.0.0.0:8080")
-	Run(host string, conf ...host.Configurator)
+	Run(host string, conf ...host.Configurator) error
 }
 
 // NewApplication would load config files from <configDir>, and then make Application with rockgo.yaml (or json) in <configDir>.
@@ -131,6 +131,6 @@ func (a *application) SetPanicHandler(fn PanicHandler) {
 	a.panicHandler = fn
 }
 
-func (a *application) Run(host string, conf ...host.Configurator) {
-	a.iris.Run(iris.Addr(host, conf...))
+func (a *application) Run(host string, conf ...host.Configurator) error {
+	return a.iris.Run(iris.Addr(host, conf...))
 }
