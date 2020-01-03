@@ -56,19 +56,28 @@ sentry:
   repanic: true
 ```
 
-* Append routes & Run server
+* Append routes, middlewares and then Run server
 ```go
 func main() {
-	// load each config file include rockgo.yaml in the directory to create Application
-	app, err := rock.NewApplication("settings")
-	if err != nil {
-		panic(err)
-	}
-	// register route handler with Service
-	app.NewService("root", "/").Get(func(ctx iris.Context) {
-		ctx.StatusCode(http.StatusOK)
-	})
-	app.Run(":8080")
+  // load each config file include rockgo.yaml in the directory to create Application
+  app, err := rock.NewApplication("settings")
+  if err != nil {
+    panic(err)
+  }
+  // register route handler with Service
+  app.Serve("root", "/").Get(func(ctx iris.Context) {
+    ctx.StatusCode(http.StatusOK)
+    ctx.Text("Hello RockGo")
+  })
+  groupArt := app.ServeGroup("article", "/arts")
+  groupArt.Use(/* append middleware working on the group only, e.g. authentication */)
+  groupArt.Serve("root", "/").Get(func(ctx iris.Context) {
+    // do something to response /arts/
+  })
+  err = app.Run(":8080")
+  if err != nil {
+    panic(err)
+  }
 }
 ```
 
