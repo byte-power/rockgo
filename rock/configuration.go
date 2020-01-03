@@ -2,6 +2,7 @@ package rock
 
 import (
 	"encoding/json"
+	"os"
 	"errors"
 	"io/ioutil"
 	"path/filepath"
@@ -79,6 +80,13 @@ func ImportConfigFromPaths(paths ...string) error {
 // e.g. app.yaml would use "app" as key.
 // - Return: each got error
 func ImportConfigFilesFromDirectory(dir string) error {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return ImportConfigFromPaths(dir)
+	}
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return err

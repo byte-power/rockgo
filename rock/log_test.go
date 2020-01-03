@@ -8,6 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestLog(t *testing.T) {
+	assert.NotNil(t, Logger(""))
+}
+
 func TestFluentLog(t *testing.T) {
 	config := make(util.AnyMap)
 	config["level"] = "info"
@@ -15,17 +19,13 @@ func TestFluentLog(t *testing.T) {
 	config["port"] = 24225
 
 	_, err := parseFluentLogger(config)
-	if err == nil {
-		t.Error("Should error if host not in config.")
-	}
+	assert.Error(t, err)
 
 	config["host"] = "127.0.0.1"
 	config["async"] = true
-	logger, _ := parseFluentLogger(config)
-
-	if logger == nil {
-		t.Error("Create FluentLogger failed.")
-	}
+	logger, err := parseFluentLogger(config)
+	assert.NotNil(t, logger)
+	assert.Nil(t, err)
 }
 
 func TestParseLogComponents(t *testing.T) {
