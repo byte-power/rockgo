@@ -56,33 +56,53 @@ func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 	}
 	name := route.MainHandlerName()
 	code := ctx.GetStatusCode()
-	dur := startHandleTime.Sub(time.Now())
+	dur := time.Now().Sub(startHandleTime)
 	method := strings.ToLower(ctx.Method())
-	var codeExpl string
+	var codeExpl []byte
 	if code > 100 && code < 400 {
-		codeExpl = ".ok"
+		codeExpl = []byte(".ok")
 	} else if code >= 400 && code < 500 {
-		codeExpl = ".4xx"
+		codeExpl = []byte(".4xx")
 	} else if code >= 500 {
-		codeExpl = ".5xx"
+		codeExpl = []byte(".5xx")
 	}
-	prefixName := apiPrefix + name
-	prefixAll := apiPrefix + "all"
-	// record: [{appName}.api.{path}.{method} | {appName}.api.{path}.all | {appName}.api.all] * [status 100~399 | 4xx | 5xx]
-	MetricIncrease(prefixName + "." + method)
-	MetricIncrease(prefixName + ".all")
-	MetricIncrease(prefixAll)
-	if codeExpl != "" {
-		MetricIncrease(prefixName + "." + method + codeExpl)
-		MetricIncrease(prefixName + ".all" + codeExpl)
-		MetricIncrease(prefixAll + codeExpl)
+	// record for analytic: min, mean, max, all, 90%
+	// count: [api.{path}.{method} | api.{path}.all | api.all] * (status 100~399 | 4xx | 5xx)
+	// time cost: [api.all | api.{path}.all] * [(status 100~399) | all]
+
+	var buf strings.Builder
+	var key string
+	for _, suffix := range []string{method, "all"} {
+		buf.Reset()
+		buf.WriteString(apiPrefix)
+		buf.WriteString(name)
+		buf.WriteByte('.')
+		buf.WriteString(suffix)
+		MetricIncrease(buf.String())
+		if codeExpl != nil {
+			buf.Write(codeExpl)
+			MetricIncrease(buf.String())
+		}
 	}
-	// record: time cost - [{appName}.api.all | {appName}.api.{path}.all] * [status 100~399 | all]
-	// 以便后期统计 min, mean, max, all, 90%
-	MetricTiming(prefixAll, dur)
-	MetricTiming(prefixName+".all", dur)
-	if codeExpl != "" {
-		MetricTiming(prefixAll+codeExpl, dur)
-		MetricTiming(prefixName+".all"+codeExpl, dur)
+	buf.Reset()
+	buf.WriteString(apiPrefix)
+	buf.WriteString("all")
+	key = buf.String()
+	MetricIncrease(key)
+	MetricTiming(key, dur)
+	if codeExpl != nil {
+		buf.Write(codeExpl)
+		key = buf.String()
+		MetricTiming(key, dur)
+		MetricIncrease(key)
+	}
+	buf.Reset()
+	buf.WriteString(apiPrefix)
+	buf.WriteString(name)
+	buf.WriteString(".all")
+	MetricTiming(buf.String(), dur)
+	if codeExpl != nil {
+		buf.Write(codeExpl)
+		MetricTiming(buf.String(), dur)
 	}
 }
