@@ -89,20 +89,20 @@ func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 	buf.WriteString("all")
 	key = buf.String()
 	MetricIncrease(key)
-	MetricTiming(key, dur)
+	MetricTimeDuration(key, dur)
 	if codeExpl != nil {
 		buf.Write(codeExpl)
 		key = buf.String()
-		MetricTiming(key, dur)
+		MetricTimeDuration(key, dur)
 		MetricIncrease(key)
 	}
 	buf.Reset()
 	buf.WriteString(apiPrefix)
 	buf.WriteString(name)
 	buf.WriteString(".all")
-	MetricTiming(buf.String(), dur)
+	MetricTimeDuration(buf.String(), dur)
 	if codeExpl != nil {
 		buf.Write(codeExpl)
-		MetricTiming(buf.String(), dur)
+		MetricTimeDuration(buf.String(), dur)
 	}
 }

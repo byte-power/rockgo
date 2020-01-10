@@ -57,35 +57,41 @@ func Metric() *statsd.Client {
 }
 
 // MetricCount would change count on <num> for key.
-func MetricCount(key string, num int) {
+func MetricCount(key string, num interface{}) {
 	if managedMetricInstance != nil {
 		managedMetricInstance.Count(metricPrefix+"."+key, num)
 	}
 }
 
-// MetricIncrease would increase count on 1 for key.
+// MetricIncrease would increase count on 1 for key with statsd count.
 func MetricIncrease(key string) {
 	if managedMetricInstance != nil {
 		managedMetricInstance.Count(metricPrefix+"."+key, 1)
 	}
 }
 
-// MetricDecrease would decrease count on 1 for key.
+// MetricDecrease would decrease count on 1 for key with statsd count.
 func MetricDecrease(key string) {
 	if managedMetricInstance != nil {
 		managedMetricInstance.Count(metricPrefix+"."+key, -1)
 	}
 }
 
-// MetricTiming would record time duration for key.
+// MetricTimeDuration would record time duration for key with statsd timing.
 //
 // - Parameters:
 //   - duration: e.g. time.Now().Sub(oldTime) or time.Second * 4
-func MetricTiming(key string, duration time.Duration) {
+func MetricTimeDuration(key string, duration time.Duration) {
 	if managedMetricInstance != nil {
 		sec := float64(duration) / float64(time.Millisecond)
 		managedMetricInstance.Timing(metricPrefix+"."+key, sec)
 	}
+}
+
+func MetricTiming(key string, value interface{})  {
+	if managedMetricInstance != nil {
+		managedMetricInstance.Timing(metricPrefix+"."+key, value)
+	}	
 }
 
 func MetricGauge(bucket string, value interface{}) {
