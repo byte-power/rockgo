@@ -17,6 +17,7 @@ log:
       host: "127.0.0.1"
       port: 24224
       async: true
+      tag: access
 
 metric:
   host: "127.0.0.1:8125"

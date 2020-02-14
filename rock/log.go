@@ -37,8 +37,11 @@ func parseLogger(appName, name string, cfg util.AnyMap) (*log.Logger, error) {
 			it := parseFileLogger(name, vs)
 			outputs = append(outputs, it)
 		case "fluent":
-			vs["tag"] = fmt.Sprintf("%s.%s", appName, name)
-			it, _ := parseFluentLogger(vs)
+			tag := util.AnyToString(vs["tag"])
+			if tag == "" {
+				tag = name
+			}
+			it, _ := parseFluentLogger(vs, fmt.Sprintf("%s.%s", appName, tag))
 			outputs = append(outputs, it)
 		}
 	}
@@ -60,7 +63,10 @@ func parseFileLogger(name string, cfg util.AnyMap) log.Output {
 	return log.MakeFileOutput(name, fmt, level, location, rotation)
 }
 
-func parseFluentLogger(cfg util.AnyMap) (log.Output, error) {
+func parseFluentLogger(cfg util.AnyMap, tag string) (log.Output, error) {
+	if tag == "" {
+		return nil, errors.New("fluent tag must be sepecified in config.")
+	}
 	level := parseLevel(cfg["level"])
 	if cfg["host"] == nil {
 		return nil, errors.New("fluent host must be specified in config.")
@@ -70,10 +76,6 @@ func parseFluentLogger(cfg util.AnyMap) (log.Output, error) {
 	if cfg["port"] != nil {
 		port = int(util.AnyToInt64(cfg["port"]))
 	}
-	if cfg["tag"] == nil {
-		return nil, errors.New("fluent tag must be sepecified in config.")
-	}
-	tag := util.AnyToString(cfg["tag"])
 	async := false
 	if cfg["async"] != nil {
 		async = util.AnyToBool(cfg["async"])
