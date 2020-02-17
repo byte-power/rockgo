@@ -1,5 +1,9 @@
 # Change Log
 
+### [v0.2.1](https://github.com/byte-power/rockgo/tree/v0.2.1)
+
+* Fixed serial bugs for metric and fluent log.
+
 ### [v0.1.0](https://github.com/byte-power/rockgo/tree/v0.1.0)
 
 * Initial release
