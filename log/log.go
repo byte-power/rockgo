@@ -1,5 +1,7 @@
 package log
 
+import "github.com/fluent/fluent-logger-golang/fluent"
+
 type Logger struct {
 	outpers []Output
 }
@@ -24,8 +26,8 @@ func MakeFileOutput(name string, fmt LocalFormat, level Level, location string, 
 	return newZapFileLogger(name, fmt, level, location, rotation)
 }
 
-func MakeFluentOutput(level Level, host string, port int, tag string, async bool) Output {
-	fluent_logger := FluentOutput{level: level, host: host, port: port, tag: tag, async: async}
+func MakeFluentOutput(level Level, tag string, config fluent.Config) Output {
+	fluent_logger := FluentOutput{level: level, config: config, tag: tag}
 	fluent_logger.Init()
 	return &fluent_logger
 }

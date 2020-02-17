@@ -3,6 +3,7 @@ package log
 import (
 	"testing"
 
+	"github.com/fluent/fluent-logger-golang/fluent"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -16,7 +17,11 @@ func (f *fluentMock) Post(tag string, message interface{}) error {
 }
 
 func TestFluentLogFormat(t *testing.T) {
-	logger := FluentOutput{level: LevelInfo, host: "127.0.0.1", port: 24225, tag: "test-fluent", async: false}
+	logger := FluentOutput{level: LevelInfo, tag: "test-fluent", config: fluent.Config{
+		FluentHost: "127.0.0.1",
+		FluentPort: 24225,
+		Async: false,
+	}}
 	testObj := new(fluentMock)
 	logger.output = testObj
 	testObj.On("Post", "test-fluent", map[string]interface{}{"message": "haha"}).Return(nil)

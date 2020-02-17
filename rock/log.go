@@ -6,6 +6,7 @@ import (
 
 	"github.com/byte-power/rockgo/log"
 	"github.com/byte-power/rockgo/util"
+	"github.com/fluent/fluent-logger-golang/fluent"
 )
 
 var loggers = map[string]*log.Logger{}
@@ -71,16 +72,21 @@ func parseFluentLogger(cfg util.AnyMap, tag string) (log.Output, error) {
 	if cfg["host"] == nil {
 		return nil, errors.New("fluent host must be specified in config.")
 	}
-	host := util.AnyToString(cfg["host"])
-	port := int(24224)
+	config := fluent.Config{
+		FluentHost: util.AnyToString(cfg["host"]),
+	}
 	if cfg["port"] != nil {
-		port = int(util.AnyToInt64(cfg["port"]))
+		config.FluentPort = int(util.AnyToInt64(cfg["port"]))
+	} else {
+		config.FluentPort = 24224
 	}
-	async := false
 	if cfg["async"] != nil {
-		async = util.AnyToBool(cfg["async"])
+		config.Async = util.AnyToBool(cfg["async"])
 	}
-	return log.MakeFluentOutput(level, host, port, tag, async), nil
+	if it := cfg["buffer_limit"]; it != nil {
+		config.BufferLimit = int(util.AnyToInt64(it))
+	}
+	return log.MakeFluentOutput(level, tag, config), nil
 }
 
 func parseFormat(cfg util.AnyMap) log.LocalFormat {

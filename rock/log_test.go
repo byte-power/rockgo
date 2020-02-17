@@ -13,17 +13,17 @@ func TestLog(t *testing.T) {
 }
 
 func TestFluentLog(t *testing.T) {
+	tag := "test-fluent"
 	config := make(util.AnyMap)
 	config["level"] = "info"
-	config["tag"] = "test-fluent"
 	config["port"] = 24225
 
-	_, err := parseFluentLogger(config)
+	_, err := parseFluentLogger(config, tag)
 	assert.Error(t, err)
 
 	config["host"] = "127.0.0.1"
 	config["async"] = true
-	logger, err := parseFluentLogger(config)
+	logger, err := parseFluentLogger(config, tag)
 	assert.NotNil(t, logger)
 	assert.Nil(t, err)
 }

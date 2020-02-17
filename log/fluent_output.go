@@ -14,10 +14,9 @@ type interfaceFluent interface {
 
 type FluentOutput struct {
 	level  Level
-	host   string
-	port   int
+	config fluent.Config
 	tag    string
-	async  bool
+
 	output interfaceFluent
 }
 
@@ -26,7 +25,7 @@ func (o *FluentOutput) Level() Level {
 }
 
 func (o *FluentOutput) Init() {
-	logger, error := fluent.New(fluent.Config{FluentPort: o.port, FluentHost: o.host, Async: o.async})
+	logger, error := fluent.New(o.config)
 	if error != nil {
 		panic(error)
 	}
@@ -39,12 +38,15 @@ func (o *FluentOutput) Log(l Level, msg string, argPairs []interface{}) {
 }
 
 func (o *FluentOutput) LogMap(l Level, msg string, values map[string]interface{}) {
-	data := make(util.AnyMap)
+	data := make(util.StrMap)
 	data["message"] = msg
 	if values != nil {
 		data["data"] = values
 	}
-	o.output.Post(o.tag, data)
+	err := o.output.Post(o.tag, data)
+	if err != nil {
+		fmt.Println("FluentOutputPostError:", err)
+	}
 }
 
 func (o *FluentOutput) LogPlainMessage(l Level, args []interface{}) {
