@@ -11,7 +11,11 @@ func newApp() *iris.Application {
 	app := iris.New()
 
 	clientApi := app.Party("/")
-	clientApi.Use(NewForClientApi(1))
+	if middleware, err := NewForClientApi(1); err != nil {
+		panic(err.Error())
+	} else {
+		clientApi.Use(middleware)
+	}
 	clientApi.Get("/", set_ip_handler)
 
 	serverApi := app.Party("/serverapi")
@@ -22,11 +26,11 @@ func newApp() *iris.Application {
 }
 
 func set_ip_handler(ctx iris.Context) {
-	realIp := ""
-	if value := ctx.Values().Get(RealIpKey); value != nil {
-		realIp = value.(string)
+	realIP := ""
+	if value := ctx.Values().Get(RealIPKey); value != nil {
+		realIP = value.(string)
 	}
-	ctx.Writef(realIp)
+	ctx.Writef(realIP)
 	ctx.Next()
 }
 
@@ -49,5 +53,5 @@ func TestServerApi(t *testing.T) {
 	e.GET("/serverapi").WithHeader("X-Forwarded-For", "1.1.1.1").Expect().Body().Equal("1.1.1.1")
 	e.GET("/serverapi").WithHeader("X-Forwarded-For", "1.1.1.1,2.2.2.2").Expect().Body().Equal("1.1.1.1")
 	e.GET("/serverapi").WithHeader("X-Forwarded-For", "1.1.1.1,2.2.2.2,3.3.3.3").Expect().Body().Equal("1.1.1.1")
-	e.GET("/serverapi").WithHeader("X-Forwarded-For", "1.1.1.1,2.2.2.2,3.3.3.3").WithHeader(RealIpKey, "4.4.4.4").Expect().Body().Equal("4.4.4.4")
+	e.GET("/serverapi").WithHeader("X-Forwarded-For", "1.1.1.1,2.2.2.2,3.3.3.3").WithHeader(RealIPKey, "4.4.4.4").Expect().Body().Equal("4.4.4.4")
 }
