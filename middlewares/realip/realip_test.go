@@ -11,11 +11,7 @@ func newApp() *iris.Application {
 	app := iris.New()
 
 	clientApi := app.Party("/")
-	if middleware, err := NewForClientApi(1); err != nil {
-		panic(err.Error())
-	} else {
-		clientApi.Use(middleware)
-	}
+	clientApi.Use(NewForClientApi(1))
 	clientApi.Get("/", set_ip_handler)
 
 	serverApi := app.Party("/serverapi")

@@ -24,11 +24,7 @@ examples：
         app := iris.New()
 
         clientApi := app.Party("/")
-        if middleware, err := NewForClientApi(1); err != nil {
-            panic(err.Error())
-        } else {
-            clientApi.Use(middleware)
-        }
+        clientApi.Use(NewForClientApi(1))
         clientApi.Get("/", set_ip_handler)
 
         serverApi := app.Party("/serverapi")
@@ -51,6 +47,7 @@ package realip
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"strings"
 
@@ -62,9 +59,7 @@ import (
 // 这个值。
 const RealIPKey = "X-User-Real-Ip"
 
-const maxProxyNumber uint = 100
-
-var ErrProxyNumberTooLarge = fmt.Errorf("proxy number should be less than or equal to %d", maxProxyNumber)
+const maxProxyNumber uint = math.MaxUint8
 
 // NewForClientApi 接收 proxyNumber 和 proxyHandlers 参数，返回获取用户真实 ip
 // 的 iris middleware，这个 middleware 适用于 client api。
@@ -76,22 +71,18 @@ var ErrProxyNumberTooLarge = fmt.Errorf("proxy number should be less than or equ
 //     // 一些确定额外的 proxy 数量的规则
 //     return extraProxyNumber
 // }
-// if middleware, err := NewForClientApi(1, myProxyHandler); err != nil {
-//     panic(err.Error())
-// } else {
-//     // use middleware
-// }
+// middleware := NewForClientApi(1, myProxyHandler)
 // 最终的 proxy 数量由 proxyNumber 加上所有 proxyHandlers 的返回值得到。
-func NewForClientApi(proxyNumber uint, proxyHandlers ...ProxyHandler) (context.Handler, error) {
+func NewForClientApi(proxyNumber uint, proxyHandlers ...ProxyHandler) context.Handler {
 	if proxyNumber > maxProxyNumber {
-		return nil, ErrProxyNumberTooLarge
+		panic(fmt.Errorf("proxy number should be less than or equal to %d", maxProxyNumber))
 	}
-    cfg := configForClientApi{
-        proxyNumber: proxyNumber,
-        proxyHandlers: proxyHandlers,
-    }
-    cfg.addHandler(checkAmazonCDNProxyHandler)
-    return cfg.serve, nil
+	cfg := configForClientApi{
+		proxyNumber:   proxyNumber,
+		proxyHandlers: proxyHandlers,
+	}
+	cfg.addHandler(checkAmazonCDNProxyHandler)
+	return cfg.serve
 }
 
 // NewForServerApi 返回获取用户真实 ip 的 iris middleware，这个 middleware
@@ -116,39 +107,39 @@ func NewForServerApi() context.Handler {
 type ProxyHandler func(iris.Context) uint
 
 type configForClientApi struct {
-    proxyNumber uint
-    proxyHandlers []ProxyHandler
+	proxyNumber   uint
+	proxyHandlers []ProxyHandler
 }
 
 func (cfg *configForClientApi) serve(ctx iris.Context) {
-    proxyNumber := int(cfg.proxyNumber)
+	proxyNumber := cfg.proxyNumber
 
-    for _, hdlr := range cfg.proxyHandlers {
-        proxyNumber += int(hdlr(ctx))
-    }
+	for _, hdlr := range cfg.proxyHandlers {
+		proxyNumber += hdlr(ctx)
+	}
 
-    realIP := ""
-    if proxyNumber > 0 {
-        realIP = getIpByXForwardedFor(ctx.GetHeader("X-Forwarded-For"), -proxyNumber)
-    }
-    if realIP == "" {
-        realIP = getIpByRemoteAddr(ctx.Request().RemoteAddr)
-    }
+	realIP := ""
+	if proxyNumber > 0 {
+		realIP = getIpByXForwardedFor(ctx.GetHeader("X-Forwarded-For"), -int(proxyNumber))
+	}
+	if realIP == "" {
+		realIP = getIpByRemoteAddr(ctx.Request().RemoteAddr)
+	}
 
-    ctx.Values().Set(RealIPKey, realIP)
-    ctx.Next()
+	ctx.Values().Set(RealIPKey, realIP)
+	ctx.Next()
 }
 
 func (cfg *configForClientApi) addHandler(hdlr ProxyHandler) {
-    cfg.proxyHandlers = append(cfg.proxyHandlers, hdlr)
+	cfg.proxyHandlers = append(cfg.proxyHandlers, hdlr)
 }
 
 func checkAmazonCDNProxyHandler(ctx iris.Context) uint {
-    userAgent := ctx.GetHeader("User-Agent")
-    if strings.Contains(userAgent, "Amazon CloudFront") {
-        return 1
-    }
-    return 0
+	userAgent := ctx.GetHeader("User-Agent")
+	if strings.Contains(userAgent, "Amazon CloudFront") {
+		return 1
+	}
+	return 0
 }
 
 func getIpByXForwardedFor(xForwardedFor string, index int) string {
