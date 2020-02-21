@@ -46,8 +46,6 @@ examples：
 package realip
 
 import (
-	"fmt"
-	"math"
 	"net"
 	"strings"
 
@@ -59,12 +57,9 @@ import (
 // 这个值。
 const RealIPKey = "X-User-Real-Ip"
 
-const maxProxyNumber uint = math.MaxUint8
-
 // NewForClientApi 接收 proxyNumber 和 proxyHandlers 参数，返回获取用户真实 ip
 // 的 iris middleware，这个 middleware 适用于 client api。
-// proxyNumber 表示 proxy 的数量，这个值应该根据项目的实际部署环境而定，
-// proxyNumber 应该大于等于 0 小于等于 maxProxyNumber。
+// proxyNumber 表示 proxy 的数量，这个值应该根据项目的实际部署环境而定。
 // proxyHandlers 允许用户自定义一些额外的确定 proxy 数量的规则，例如：
 // func myProxyHandler(ctx iris.Context) uint {
 //     extraProxyNumber := 0
@@ -73,10 +68,7 @@ const maxProxyNumber uint = math.MaxUint8
 // }
 // middleware := NewForClientApi(1, myProxyHandler)
 // 最终的 proxy 数量由 proxyNumber 加上所有 proxyHandlers 的返回值得到。
-func NewForClientApi(proxyNumber uint, proxyHandlers ...ProxyHandler) context.Handler {
-	if proxyNumber > maxProxyNumber {
-		panic(fmt.Errorf("proxy number should be less than or equal to %d", maxProxyNumber))
-	}
+func NewForClientApi(proxyNumber uint8, proxyHandlers ...ProxyHandler) context.Handler {
 	cfg := configForClientApi{
 		proxyNumber:   proxyNumber,
 		proxyHandlers: proxyHandlers,
@@ -107,12 +99,12 @@ func NewForServerApi() context.Handler {
 type ProxyHandler func(iris.Context) uint
 
 type configForClientApi struct {
-	proxyNumber   uint
+	proxyNumber   uint8
 	proxyHandlers []ProxyHandler
 }
 
 func (cfg *configForClientApi) serve(ctx iris.Context) {
-	proxyNumber := cfg.proxyNumber
+	proxyNumber := uint(cfg.proxyNumber)
 
 	for _, hdlr := range cfg.proxyHandlers {
 		proxyNumber += hdlr(ctx)
