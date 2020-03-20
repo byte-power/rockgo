@@ -9,7 +9,6 @@ import (
 )
 
 var managedMetricInstance *statsd.Client
-var metricPrefix string
 
 func initMetric(prefix string, cfg util.AnyMap) (err error) {
 	var opts []statsd.Option
@@ -21,7 +20,6 @@ func initMetric(prefix string, cfg util.AnyMap) (err error) {
 			return
 		}
 	}
-	metricPrefix = prefix
 	opts = append(opts, statsd.Prefix(prefix))
 	if it := util.AnyToInt64(cfg["max_packet_size"]); it > 0 {
 		opts = append(opts, statsd.MaxPacketSize(int(it)))
@@ -59,21 +57,21 @@ func Metric() *statsd.Client {
 // MetricCount would change count on <num> for key.
 func MetricCount(key string, num interface{}) {
 	if managedMetricInstance != nil {
-		managedMetricInstance.Count(metricPrefix+"."+key, num)
+		managedMetricInstance.Count(key, num)
 	}
 }
 
 // MetricIncrease would increase count on 1 for key with statsd count.
 func MetricIncrease(key string) {
 	if managedMetricInstance != nil {
-		managedMetricInstance.Count(metricPrefix+"."+key, 1)
+		managedMetricInstance.Count(key, 1)
 	}
 }
 
 // MetricDecrease would decrease count on 1 for key with statsd count.
 func MetricDecrease(key string) {
 	if managedMetricInstance != nil {
-		managedMetricInstance.Count(metricPrefix+"."+key, -1)
+		managedMetricInstance.Count(key, -1)
 	}
 }
 
@@ -84,24 +82,24 @@ func MetricDecrease(key string) {
 func MetricTimeDuration(key string, duration time.Duration) {
 	if managedMetricInstance != nil {
 		sec := float64(duration) / float64(time.Millisecond)
-		managedMetricInstance.Timing(metricPrefix+"."+key, sec)
+		managedMetricInstance.Timing(key, sec)
 	}
 }
 
 func MetricTiming(key string, value interface{})  {
 	if managedMetricInstance != nil {
-		managedMetricInstance.Timing(metricPrefix+"."+key, value)
+		managedMetricInstance.Timing(key, value)
 	}	
 }
 
 func MetricGauge(bucket string, value interface{}) {
 	if managedMetricInstance != nil {
-		managedMetricInstance.Gauge(metricPrefix+"."+bucket, value)
+		managedMetricInstance.Gauge(bucket, value)
 	}
 }
 
 func MetricHistogram(bucket string, value interface{}) {
 	if managedMetricInstance != nil {
-		managedMetricInstance.Histogram(metricPrefix+"."+bucket, value)
+		managedMetricInstance.Histogram(bucket, value)
 	}
 }
