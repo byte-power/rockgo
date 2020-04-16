@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"errors"
@@ -9,7 +10,10 @@ import (
 	"io"
 	"strconv"
 )
-import "crypto/aes"
+
+var (
+	ErrCipherTextLengthIncorrect = errors.New("Cipher text is not a multiple of the block size ")
+)
 
 type Coder interface {
 	Encrypt([]byte) ([]byte, error)
@@ -63,11 +67,12 @@ func (coder aesECBCoder) Encrypt(src []byte) ([]byte, error) {
 
 func (coder aesECBCoder) Decrypt(src []byte) (dst []byte, e error) {
 	block := coder.cipher
-
-	length := len(src)
-	decrypted := make([]byte, length)
 	size := block.BlockSize()
-
+	length := len(src)
+	if length%size != 0 {
+		return nil, ErrCipherTextLengthIncorrect
+	}
+	decrypted := make([]byte, length)
 	//分组分块加密
 	for bs, be := 0, size; bs < length; bs, be = bs+size, be+size {
 		block.Decrypt(decrypted[bs:be], src[bs:be])
@@ -128,7 +133,7 @@ func (coder aesCBCCoder) Decrypt(src []byte) ([]byte, error) {
 	blockSize := block.BlockSize()
 	encryptData := src
 	if len(encryptData) < blockSize {
-		return nil, errors.New("Cipher text too short ")
+		return nil, ErrCipherTextLengthIncorrect
 	}
 
 	var iv []byte
@@ -142,7 +147,7 @@ func (coder aesCBCCoder) Decrypt(src []byte) ([]byte, error) {
 
 	// CBC mode always works in whole blocks.
 	if len(encryptData)%blockSize != 0 {
-		return nil, errors.New("Cipher text is not a multiple of the block size ")
+		return nil, ErrCipherTextLengthIncorrect
 	}
 
 	decrypt := cipher.NewCBCDecrypter(block, iv)
