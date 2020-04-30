@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 )
 
@@ -77,7 +75,6 @@ func (coder aesECBCoder) Decrypt(src []byte) (dst []byte, e error) {
 	for bs, be := 0, size; bs < length; bs, be = bs+size, be+size {
 		block.Decrypt(decrypted[bs:be], src[bs:be])
 	}
-
 	cipherText, err := pkcs7strip(decrypted)
 	if err != nil {
 		return nil, fmt.Errorf("Unpadding failed. %w", err)
@@ -103,62 +100,37 @@ type aesCBCCoder struct {
 
 func (coder aesCBCCoder) Encrypt(src []byte) ([]byte, error) {
 	block := coder.cipher
-
-	//填充原文
 	blockSize := block.BlockSize()
+	// blockSize和初始向量大小要一致
+	if len(coder.iv) != blockSize {
+		return nil, errors.New("The length of iv should be " + strconv.Itoa(blockSize))
+	}
+	// 填充原文
 	rawData := pkcs7pad(src, blockSize)
 	cipherText := make([]byte, blockSize+len(rawData))
 
-	var iv []byte
-
-	if len(coder.iv) != blockSize {
-		return nil, errors.New("The length of iv should be " + strconv.Itoa(blockSize))
-	} else {
-		iv = coder.iv
-	}
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
-	}
-
-	//block大小和初始向量大小一定要一致
-	encrypt := cipher.NewCBCEncrypter(block, iv)
+	encrypt := cipher.NewCBCEncrypter(block, coder.iv)
 	encrypt.CryptBlocks(cipherText[blockSize:], rawData)
-
 	return cipherText, nil
 }
 
 func (coder aesCBCCoder) Decrypt(src []byte) ([]byte, error) {
 	block := coder.cipher
-
 	blockSize := block.BlockSize()
-	encryptData := src
-	if len(encryptData) < blockSize {
-		return nil, ErrCipherTextLengthIncorrect
-	}
-
-	var iv []byte
 	if len(coder.iv) != blockSize {
 		return nil, errors.New("The length of iv should be " + strconv.Itoa(blockSize))
-	} else {
-		iv = coder.iv
 	}
-
-	encryptData = encryptData[blockSize:]
-
+	if len(src) < blockSize {
+		return nil, ErrCipherTextLengthIncorrect
+	}
+	encryptData := src[blockSize:]
 	// CBC mode always works in whole blocks.
 	if len(encryptData)%blockSize != 0 {
 		return nil, ErrCipherTextLengthIncorrect
 	}
-
-	decrypt := cipher.NewCBCDecrypter(block, iv)
-
+	decrypt := cipher.NewCBCDecrypter(block, coder.iv)
 	// CryptBlocks can work in-place if the two arguments are the same.
 	decrypt.CryptBlocks(encryptData, encryptData)
-	//解填充
-	plainText, err := pkcs7strip(encryptData)
-
-	if err != nil {
-		return nil, err
-	}
-	return plainText, nil
+	// 解填充
+	return pkcs7strip(encryptData)
 }
