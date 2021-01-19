@@ -9,6 +9,7 @@ import (
 )
 
 var managedMetricInstance *statsd.Client
+var managedMetricPrefix string
 
 func initMetric(prefix string, cfg util.AnyMap) (err error) {
 	var opts []statsd.Option
@@ -20,6 +21,7 @@ func initMetric(prefix string, cfg util.AnyMap) (err error) {
 			return
 		}
 	}
+	managedMetricPrefix = prefix
 	opts = append(opts, statsd.Prefix(prefix))
 	if it := util.AnyToInt64(cfg["max_packet_size"]); it > 0 {
 		opts = append(opts, statsd.MaxPacketSize(int(it)))
@@ -57,22 +59,19 @@ func Metric() *statsd.Client {
 // MetricCount would change count on <num> for key.
 func MetricCount(key string, num interface{}) {
 	if managedMetricInstance != nil {
+		// println("MetricCount ", managedMetricPrefix, key, num)
 		managedMetricInstance.Count(key, num)
 	}
 }
 
 // MetricIncrease would increase count on 1 for key with statsd count.
 func MetricIncrease(key string) {
-	if managedMetricInstance != nil {
-		managedMetricInstance.Count(key, 1)
-	}
+	MetricCount(key, 1)
 }
 
 // MetricDecrease would decrease count on 1 for key with statsd count.
 func MetricDecrease(key string) {
-	if managedMetricInstance != nil {
-		managedMetricInstance.Count(key, -1)
-	}
+	MetricCount(key, -1)
 }
 
 // MetricTimeDuration would record time duration for key with statsd timing.
@@ -82,6 +81,7 @@ func MetricDecrease(key string) {
 func MetricTimeDuration(key string, duration time.Duration) {
 	if managedMetricInstance != nil {
 		sec := float64(duration) / float64(time.Millisecond)
+		// println("MetricTiming", managedMetricPrefix, key, sec)
 		managedMetricInstance.Timing(key, sec)
 	}
 }

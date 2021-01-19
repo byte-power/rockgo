@@ -2,6 +2,7 @@ package rock
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 )
 
 const apiPrefix = "api."
+const timecostSuffix = ".timecost"
+const statusCodeSuffixOK = ".ok"
 
 type panicHandlerProvider interface {
 	PanicHandler() PanicHandler
@@ -54,55 +57,58 @@ func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 	if route == nil || Metric() == nil {
 		return
 	}
-	name := route.MainHandlerName()
+	name := route.Path()
 	code := ctx.GetStatusCode()
 	dur := time.Now().Sub(startHandleTime)
 	method := strings.ToLower(ctx.Method())
-	var codeExpl []byte
+	var codeExpl string
 	if code > 100 && code < 400 {
-		codeExpl = []byte(".ok")
+		codeExpl = statusCodeSuffixOK
 	} else if code >= 400 && code < 500 {
-		codeExpl = []byte(".4xx")
+		codeExpl = ".4xx"
 	} else if code >= 500 {
-		codeExpl = []byte(".5xx")
+		codeExpl = fmt.Sprintf(".%v", code)
 	}
-	// record for analytic: min, mean, max, all, 90%
-	// count: [api.{path}.{method} | api.{path}.all | api.all] * (status 100~399 | 4xx | 5xx)
-	// time cost: [api.all | api.{path}.all] * [(status 100~399) | all]
 
 	var buf strings.Builder
-	var key string
+	buf.Reset()
+	// count: api.all
+	MetricIncrease(writeStrings(&buf, apiPrefix, "all"))
+	// timecost: api.all.timecost
+	buf.WriteString(timecostSuffix)
+	MetricTimeDuration(buf.String(), dur)
+
+	buf.Reset()
 	for _, suffix := range []string{method, "all"} {
 		buf.Reset()
-		buf.WriteString(apiPrefix)
-		buf.WriteString(name)
-		buf.WriteByte('.')
-		buf.WriteString(suffix)
-		MetricIncrease(buf.String())
-		if codeExpl != nil {
-			buf.Write(codeExpl)
+		// count: api.{path}.[{method}|all]
+		MetricIncrease(writeStrings(&buf, apiPrefix, name, ".", suffix))
+		if codeExpl != "" {
+			// count: api.{path}.[{method}|all].[ok|4xx|5xx]
+			buf.WriteString(codeExpl)
 			MetricIncrease(buf.String())
 		}
 	}
-	buf.Reset()
-	buf.WriteString(apiPrefix)
-	buf.WriteString("all")
-	key = buf.String()
-	MetricIncrease(key)
-	MetricTimeDuration(key, dur)
-	if codeExpl != nil {
-		buf.Write(codeExpl)
-		key = buf.String()
-		MetricTimeDuration(key, dur)
-		MetricIncrease(key)
-	}
-	buf.Reset()
-	buf.WriteString(apiPrefix)
-	buf.WriteString(name)
-	buf.WriteString(".all")
-	MetricTimeDuration(buf.String(), dur)
-	if codeExpl != nil {
-		buf.Write(codeExpl)
+	// timecost: api.{path}.all.timecost
+	MetricTimeDuration(writeStrings(&buf, apiPrefix, name, ".all", timecostSuffix), dur)
+	if codeExpl != "" {
+		buf.Reset()
+		// count: api.all.[ok|4xx|5xx]
+		MetricIncrease(writeStrings(&buf, apiPrefix, "all", codeExpl))
+		// count: api.all.[ok|4xx|5xx].timecost
+		buf.WriteString(timecostSuffix)
 		MetricTimeDuration(buf.String(), dur)
+		if codeExpl == statusCodeSuffixOK {
+			buf.Reset()
+			// timecost: api.{path}.all.ok.timecost
+			MetricTimeDuration(writeStrings(&buf, apiPrefix, name, ".all", codeExpl, timecostSuffix), dur)
+		}
 	}
+}
+
+func writeStrings(buf *strings.Builder, strs ...string) string {
+	for _, str := range strs {
+		buf.WriteString(str)
+	}
+	return buf.String()
 }
