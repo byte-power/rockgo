@@ -57,7 +57,10 @@ func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 	if route == nil || Metric() == nil {
 		return
 	}
-	name := route.Path()
+	name := strings.ReplaceAll(strings.Trim(route.Path(), "/"), "/", ".")
+	if name == "" {
+		name = "/"
+	}
 	code := ctx.GetStatusCode()
 	dur := time.Now().Sub(startHandleTime)
 	method := strings.ToLower(ctx.Method())
@@ -71,16 +74,13 @@ func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 	}
 
 	var buf strings.Builder
-	buf.Reset()
 	// count: api.all
 	MetricIncrease(writeStrings(&buf, apiPrefix, "all"))
 	// timecost: api.all.timecost
 	buf.WriteString(timecostSuffix)
 	MetricTimeDuration(buf.String(), dur)
 
-	buf.Reset()
 	for _, suffix := range []string{method, "all"} {
-		buf.Reset()
 		// count: api.{path}.[{method}|all]
 		MetricIncrease(writeStrings(&buf, apiPrefix, name, ".", suffix))
 		if codeExpl != "" {
@@ -92,14 +92,12 @@ func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 	// timecost: api.{path}.all.timecost
 	MetricTimeDuration(writeStrings(&buf, apiPrefix, name, ".all", timecostSuffix), dur)
 	if codeExpl != "" {
-		buf.Reset()
 		// count: api.all.[ok|4xx|5xx]
 		MetricIncrease(writeStrings(&buf, apiPrefix, "all", codeExpl))
 		// count: api.all.[ok|4xx|5xx].timecost
 		buf.WriteString(timecostSuffix)
 		MetricTimeDuration(buf.String(), dur)
 		if codeExpl == statusCodeSuffixOK {
-			buf.Reset()
 			// timecost: api.{path}.all.ok.timecost
 			MetricTimeDuration(writeStrings(&buf, apiPrefix, name, ".all", codeExpl, timecostSuffix), dur)
 		}
@@ -107,6 +105,7 @@ func recordMetric(ctx iris.Context, startHandleTime time.Time) {
 }
 
 func writeStrings(buf *strings.Builder, strs ...string) string {
+	buf.Reset()
 	for _, str := range strs {
 		buf.WriteString(str)
 	}
